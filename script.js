@@ -3,10 +3,10 @@ const users = {
 Admin:"admin123",
 Farhad:"1234",
 Rakim:"1234",
-Hadi:"1234",
+Hadi&Batman:"1234",
 Rizvi:"1234",
 Mehedi:"1234",
-Shafi:"1234"
+Jahid:"1234"
 };
 
 const BREAKFAST_RATE = 20;
