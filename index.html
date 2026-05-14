@@ -5,146 +5,162 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Neo Meal System</title>
+
 <link rel="stylesheet" href="style.css">
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
 <div class="login-page" id="loginPage">
-<div class="login-card">
-<h1>Ali Vai Meal System</h1>
+    <div class="login-card">
+        <h1>Neo Meal System</h1>
+        <p>Realtime Firebase Meal Management</p>
 
-<select id="username">
-<option value="">Select Account</option>
-<option value="Admin">Admin</option>
-<option value="Farhad">Farhad</option>
-<option value="Rakim">Rakim</option>
-<option value="Hadi">Hadi</option>
-<option value="Rizvi">Rizvi</option>
-<option value="Mehedi">Mehedi</option>
-<option value="Shafi Batman">Shafi</option>
-</select>
+        <select id="username">
+            <option value="">Select Account</option>
+            <option value="Admin">Admin</option>
+            <option value="Farhad">Farhad</option>
+            <option value="Rakim">Rakim</option>
+            <option value="Hadi">Hadi</option>
+            <option value="Rizvi">Rizvi</option>
+            <option value="Mehedi">Mehedi</option>
+            <option value="Shafi">Shafi</option>
+        </select>
 
-<input type="password" id="password" placeholder="Password">
+        <input type="password" id="password" placeholder="Password">
 
-<button onclick="login()">Login</button>
-</div>
+        <button onclick="login()">Login</button>
+    </div>
 </div>
 
 <div class="dashboard hidden" id="dashboard">
 
-<div class="topbar">
-<h2 id="welcome"></h2>
-<button onclick="logout()">Logout</button>
+    <div class="topbar">
+        <div>
+            <h2 id="welcome"></h2>
+            <span>Realtime Dashboard</span>
+        </div>
+
+        <button onclick="logout()">Logout</button>
+    </div>
+
+    <div class="main-grid">
+
+        <div class="meal-card" id="mealBox">
+
+            <h3>Daily Meal Entry</h3>
+
+            <input type="date" id="mealDate">
+
+            <div class="meal-grid">
+
+                <div>
+                    <label>Breakfast (20৳)</label>
+                    <select id="breakfast">
+                        <option>0</option>
+                        <option>1</option>
+                        <option>2</option>
+                        <option>3</option>
+                        <option>4</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label>Lunch (50৳)</label>
+                    <select id="lunch">
+                        <option>0</option>
+                        <option>1</option>
+                        <option>2</option>
+                        <option>3</option>
+                        <option>4</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label>Dinner (50৳)</label>
+                    <select id="dinner">
+                        <option>0</option>
+                        <option>1</option>
+                        <option>2</option>
+                        <option>3</option>
+                        <option>4</option>
+                    </select>
+                </div>
+
+            </div>
+
+            <button onclick="saveMeal()">Save Meal</button>
+
+        </div>
+
+        <div class="stats-grid">
+
+            <div class="stat-card">
+                <h4>Total Breakfast</h4>
+                <p id="totalBreakfast">0</p>
+            </div>
+
+            <div class="stat-card">
+                <h4>Total Lunch</h4>
+                <p id="totalLunch">0</p>
+            </div>
+
+            <div class="stat-card">
+                <h4>Total Dinner</h4>
+                <p id="totalDinner">0</p>
+            </div>
+
+            <div class="stat-card">
+                <h4>Total Meals</h4>
+                <p id="totalMeals">0</p>
+            </div>
+
+            <div class="stat-card">
+                <h4>Total Cost</h4>
+                <p>৳ <span id="totalCost">0</span></p>
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="table-card">
+
+        <h3 id="tableTitle">Meal History</h3>
+
+        <div class="table-wrapper">
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Name</th>
+                        <th>Breakfast</th>
+                        <th>Lunch</th>
+                        <th>Dinner</th>
+                        <th>Total Meal</th>
+                        <th>Cost</th>
+                    </tr>
+                </thead>
+
+                <tbody id="tableBody"></tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+    <div class="developer">
+        Developed By <span>Farhad</span>
+    </div>
+
 </div>
 
-<div class="meal-card" id="mealBox">
-
-<h3>Daily Meal Entry</h3>
-
-<input type="date" id="mealDate">
-
-<div class="meal-grid">
-
-<div>
-<label>Breakfast (20৳)</label>
-<select id="breakfast">
-<option value="0">0</option>
-<option value="1">1</option>
-<option value="2">2</option>
-<option value="3">3</option>
-<option value="4">4</option>
-</select>
-</div>
-
-<div>
-<label>Lunch (50৳)</label>
-<select id="lunch">
-<option value="0">0</option>
-<option value="1">1</option>
-<option value="2">2</option>
-<option value="3">3</option>
-<option value="4">4</option>
-</select>
-</div>
-
-<div>
-<label>Dinner (50৳)</label>
-<select id="dinner">
-<option value="0">0</option>
-<option value="1">1</option>
-<option value="2">2</option>
-<option value="3">3</option>
-<option value="4">4</option>
-</select>
-</div>
-
-</div>
-
-<button onclick="saveMeal()">Save Meal</button>
-
-</div>
-
-<div class="stats-grid">
-
-<div class="stat-card">
-<h4>Total Breakfast</h4>
-<p id="totalBreakfast">0</p>
-</div>
-
-<div class="stat-card">
-<h4>Total Lunch</h4>
-<p id="totalLunch">0</p>
-</div>
-
-<div class="stat-card">
-<h4>Total Dinner</h4>
-<p id="totalDinner">0</p>
-</div>
-
-<div class="stat-card">
-<h4>Total Meals</h4>
-<p id="totalMeals">0</p>
-</div>
-
-<div class="stat-card">
-<h4>Total Cost</h4>
-<p>৳ <span id="totalCost">0</span></p>
-</div>
-
-</div>
-
-<div class="table-card">
-
-<h3 id="tableTitle">Meal History</h3>
-
-<div class="table-wrapper">
-
-<table>
-<thead>
-<tr>
-<th>Date</th>
-<th>Name</th>
-<th>Breakfast</th>
-<th>Lunch</th>
-<th>Dinner</th>
-<th>Total Meal</th>
-<th>Cost</th>
-</tr>
-</thead>
-
-<tbody id="tableBody"></tbody>
-
-</table>
-
-</div>
-
-</div>
-
-</div>
-
+<script src="firebase-config.js"></script>
 <script src="script.js"></script>
-<div class="developer">
-    Developed By <span>Farhad</span>
-</div>
+
 </body>
 </html>

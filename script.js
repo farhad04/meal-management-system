@@ -15,9 +15,32 @@ const DINNER_RATE = 50;
 
 let currentUser = "";
 
-if(!localStorage.getItem("mealDropdownHistory")){
-localStorage.setItem("mealDropdownHistory", JSON.stringify([]));
+// Auto Login
+window.onload = function(){
+
+const savedUser = localStorage.getItem("loggedUser");
+
+if(savedUser){
+
+currentUser = savedUser;
+
+document.getElementById("loginPage").classList.add("hidden");
+document.getElementById("dashboard").classList.remove("hidden");
+
+document.getElementById("welcome").innerText = "Welcome " + currentUser;
+
+if(currentUser === "Admin"){
+document.getElementById("mealBox").style.display = "none";
+document.getElementById("tableTitle").innerText = "All Member Meal History";
+}else{
+document.getElementById("tableTitle").innerText = "Your Meal History";
 }
+
+loadMeals();
+
+}
+
+};
 
 function login(){
 
@@ -27,6 +50,8 @@ const password = document.getElementById("password").value;
 if(users[username] === password){
 
 currentUser = username;
+
+localStorage.setItem("loggedUser", username);
 
 document.getElementById("loginPage").classList.add("hidden");
 document.getElementById("dashboard").classList.remove("hidden");
@@ -40,14 +65,15 @@ document.getElementById("tableTitle").innerText = "All Member Meal History";
 document.getElementById("tableTitle").innerText = "Your Meal History";
 }
 
-renderTable();
+loadMeals();
 
 }else{
 alert("Wrong Password");
 }
+
 }
 
-function saveMeal(){
+async function saveMeal(){
 
 const date = document.getElementById("mealDate").value;
 
@@ -67,21 +93,7 @@ const totalCost =
 (lunch * LUNCH_RATE) +
 (dinner * DINNER_RATE);
 
-const data = JSON.parse(localStorage.getItem("mealDropdownHistory"));
-
-const existing = data.find(item => item.user === currentUser && item.date === date);
-
-if(existing){
-
-existing.breakfast = breakfast;
-existing.lunch = lunch;
-existing.dinner = dinner;
-existing.totalMeal = totalMeal;
-existing.totalCost = totalCost;
-
-}else{
-
-data.push({
+await db.collection("meals").doc(currentUser + "_" + date).set({
 user: currentUser,
 date,
 breakfast,
@@ -91,19 +103,13 @@ totalMeal,
 totalCost
 });
 
-}
-
-localStorage.setItem("mealDropdownHistory", JSON.stringify(data));
-
-renderTable();
-
 alert("Meal Saved!");
 
 }
 
-function renderTable(){
+function loadMeals(){
 
-const data = JSON.parse(localStorage.getItem("mealDropdownHistory"));
+db.collection("meals").onSnapshot((snapshot)=>{
 
 const table = document.getElementById("tableBody");
 
@@ -115,17 +121,13 @@ let totalDinner = 0;
 let totalMeals = 0;
 let totalCost = 0;
 
-let filteredData = [];
+snapshot.forEach((doc)=>{
 
-if(currentUser === "Admin"){
-filteredData = data;
-}else{
-filteredData = data.filter(item => item.user === currentUser);
+const item = doc.data();
+
+if(currentUser !== "Admin" && item.user !== currentUser){
+return;
 }
-
-filteredData.sort((a,b)=> new Date(b.date)-new Date(a.date));
-
-filteredData.forEach(item=>{
 
 totalBreakfast += item.breakfast;
 totalLunch += item.lunch;
@@ -153,8 +155,13 @@ document.getElementById("totalDinner").innerText = totalDinner;
 document.getElementById("totalMeals").innerText = totalMeals;
 document.getElementById("totalCost").innerText = totalCost;
 
+});
+
 }
 
 function logout(){
+
+localStorage.removeItem("loggedUser");
 location.reload();
+
 }
