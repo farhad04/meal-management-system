@@ -15,7 +15,6 @@ const DINNER_RATE = 50;
 
 let currentUser = "";
 
-// Auto Login
 window.onload = function(){
 
 const savedUser = localStorage.getItem("loggedUser");
@@ -32,11 +31,40 @@ document.getElementById("welcome").innerText = "Welcome " + currentUser;
 if(currentUser === "Admin"){
 document.getElementById("mealBox").style.display = "none";
 document.getElementById("tableTitle").innerText = "All Member Meal History";
+
+const memberCostCard = document.querySelector(".member-cost-card");
+const memberCostList = document.getElementById("memberCostList");
+
+if(memberCostCard){
+memberCostCard.style.display = "block";
+memberCostCard.style.visibility = "visible";
+}
+
+if(memberCostList){
+memberCostList.style.display = "block";
+memberCostList.style.visibility = "visible";
+memberCostList.classList.remove("hidden");
+}
 }else{
 document.getElementById("tableTitle").innerText = "Your Meal History";
+
+const memberCostCard = document.querySelector(".member-cost-card");
+const memberCostList = document.getElementById("memberCostList");
+
+if(memberCostCard){
+memberCostCard.style.display = "none";
+memberCostCard.style.visibility = "hidden";
+}
+
+if(memberCostList){
+memberCostList.style.display = "none";
+memberCostList.style.visibility = "hidden";
+}
 }
 
 loadMeals();
+loadPayments();
+loadMamaPayments();
 
 }
 
@@ -61,11 +89,28 @@ document.getElementById("welcome").innerText = "Welcome " + username;
 if(username === "Admin"){
 document.getElementById("mealBox").style.display = "none";
 document.getElementById("tableTitle").innerText = "All Member Meal History";
+
+if(document.querySelector(".member-cost-card")){
+document.querySelector(".member-cost-card").style.display = "block";
+}
+
 }else{
+
 document.getElementById("tableTitle").innerText = "Your Meal History";
+
+if(document.querySelector(".member-cost-card")){
+document.querySelector(".member-cost-card").style.display = "none";
+}
+
+if(document.getElementById("memberCostList")){
+document.getElementById("memberCostList").style.display = "none";
+}
+
 }
 
 loadMeals();
+loadPayments();
+loadMamaPayments();
 
 }else{
 alert("Wrong Password");
@@ -76,6 +121,16 @@ alert("Wrong Password");
 async function saveMeal(){
 
 const date = document.getElementById("mealDate").value;
+
+const today = new Date().toISOString().split("T")[0];
+
+if(currentUser !== "Admin" && date < today){
+
+alert("Previous day meal cannot be changed!");
+
+return;
+
+}
 
 if(date === ""){
 alert("Select Date");
@@ -121,6 +176,8 @@ let totalDinner = 0;
 let totalMeals = 0;
 let totalCost = 0;
 
+const memberTotals = {};
+
 snapshot.forEach((doc)=>{
 
 const item = doc.data();
@@ -135,6 +192,12 @@ totalDinner += item.dinner;
 totalMeals += item.totalMeal;
 totalCost += item.totalCost;
 
+if(!memberTotals[item.user]){
+memberTotals[item.user] = 0;
+}
+
+memberTotals[item.user] += item.totalCost;
+
 table.innerHTML += `
 <tr>
 <td>${item.date}</td>
@@ -144,6 +207,9 @@ table.innerHTML += `
 <td>${item.dinner}</td>
 <td>${item.totalMeal}</td>
 <td>৳ ${item.totalCost}</td>
+<td>
+${currentUser === "Admin" ? `<button onclick="deleteMeal('${doc.id}')" class="delete-btn">Delete</button>` : ""}
+</td>
 </tr>
 `;
 
@@ -155,7 +221,49 @@ document.getElementById("totalDinner").innerText = totalDinner;
 document.getElementById("totalMeals").innerText = totalMeals;
 document.getElementById("totalCost").innerText = totalCost;
 
+if(currentUser === "Admin"){
+
+let memberHtml = "";
+
+Object.keys(memberTotals).forEach(member=>{
+
+memberHtml += `
+<div class="member-item">
+<span>${member}</span>
+<span>৳ ${memberTotals[member]}</span>
+</div>
+`;
+
 });
+
+document.getElementById("memberCostList").innerHTML = memberHtml;
+document.getElementById("grandTotalCost").innerText = totalCost;
+
+}
+
+});
+
+}
+
+async function deleteMeal(id){
+
+const confirmDelete = confirm("Delete this meal?");
+
+if(confirmDelete){
+
+await db.collection("meals").doc(id).delete();
+
+alert("Meal Deleted");
+
+}
+
+}
+
+function toggleMemberCosts(){
+
+const box = document.getElementById("memberCostList");
+
+box.classList.toggle("hidden");
 
 }
 
@@ -163,5 +271,111 @@ function logout(){
 
 localStorage.removeItem("loggedUser");
 location.reload();
+
+}
+
+
+async function savePayment(){
+
+const paymentDate = document.getElementById("paymentDate").value;
+const paymentAmount = parseInt(document.getElementById("paymentAmount").value);
+
+if(paymentDate === "" || !paymentAmount){
+alert("Enter payment info");
+return;
+}
+
+await db.collection("payments").add({
+user: currentUser,
+date: paymentDate,
+amount: paymentAmount
+});
+
+alert("Payment Saved!");
+
+}
+
+async function loadPayments(){
+
+const snapshot = await db.collection("payments").get();
+
+let totalDeposit = 0;
+
+snapshot.forEach((doc)=>{
+
+const item = doc.data();
+
+if(currentUser !== "Admin" && item.user !== currentUser){
+return;
+}
+
+totalDeposit += item.amount;
+
+});
+
+const usedCost = parseInt(document.getElementById("totalCost").innerText) || 0;
+
+document.getElementById("totalDeposit").innerText = totalDeposit;
+
+document.getElementById("usedCost").innerText = usedCost;
+
+document.getElementById("currentBalance").innerText = totalDeposit - usedCost;
+
+}
+
+
+async function saveMamaPayment(){
+
+const mamaDate = document.getElementById("mamaDate").value;
+const mamaAmount = parseInt(document.getElementById("mamaAmount").value);
+
+if(currentUser !== "Admin"){
+return;
+}
+
+if(mamaDate === "" || !mamaAmount){
+alert("Enter mama payment info");
+return;
+}
+
+await db.collection("mamaPayments").add({
+date:mamaDate,
+amount:mamaAmount
+});
+
+alert("Mama Payment Saved!");
+
+loadMamaPayments();
+
+}
+
+async function loadMamaPayments(){
+
+if(currentUser !== "Admin"){
+
+if(document.getElementById("mamaPaymentBox")){
+document.getElementById("mamaPaymentBox").style.display="none";
+}
+
+return;
+}
+
+const snapshot = await db.collection("mamaPayments").get();
+
+let totalMama = 0;
+
+snapshot.forEach((doc)=>{
+
+const item = doc.data();
+
+totalMama += item.amount;
+
+});
+
+const mealCost = parseInt(document.getElementById("totalCost").innerText) || 0;
+
+document.getElementById("totalMamaPayment").innerText = totalMama;
+document.getElementById("mamaMealCost").innerText = mealCost;
+document.getElementById("remainingMamaBalance").innerText = totalMama - mealCost;
 
 }

@@ -46,6 +46,10 @@
         <button onclick="logout()">Logout</button>
     </div>
 
+    <div class="notice-banner">
+    ⚠️ রাত ১০টার মধ্যে মিল কমপ্লিট করতে হবে! ১০টার পর মিল গ্রহণযোগ্য হবে না।
+    </div>
+
     <div class="main-grid">
 
         <div class="meal-card" id="mealBox">
@@ -126,6 +130,26 @@
 
     </div>
 
+    
+        <div class="payment-card" id="paymentBox">
+
+            <h3>Payment Entry</h3>
+
+            <input type="date" id="paymentDate">
+
+            <input type="number" id="paymentAmount" placeholder="Enter Amount">
+
+            <button onclick="savePayment()">Save Payment</button>
+
+            <div class="balance-box">
+                <h4>Total Deposit: ৳ <span id="totalDeposit">0</span></h4>
+                <h4>Meal Cost: ৳ <span id="usedCost">0</span></h4>
+                <h4>Current Balance: ৳ <span id="currentBalance">0</span></h4>
+            </div>
+
+        </div>
+
+
     <div class="table-card">
 
         <h3 id="tableTitle">Meal History</h3>
@@ -141,7 +165,7 @@
                         <th>Lunch</th>
                         <th>Dinner</th>
                         <th>Total Meal</th>
-                        <th>Cost</th>
+                        <th>Cost</th><th>Action</th>
                     </tr>
                 </thead>
 
@@ -153,7 +177,36 @@
 
     </div>
 
+    
+    <div class="member-cost-card" onclick="toggleMemberCosts()">
+        <h3>Total Member Cost</h3>
+        <p>৳ <span id="grandTotalCost">0</span></p>
+    </div>
+
+    <div class="member-cost-list hidden" id="memberCostList"></div>
+
+    
+    <div class="payment-card" id="mamaPaymentBox">
+
+        <h3>Meal Mama Payment</h3>
+
+        <input type="date" id="mamaDate">
+
+        <input type="number" id="mamaAmount" placeholder="Enter Amount">
+
+        <button onclick="saveMamaPayment()">Save Mama Payment</button>
+
+        <div class="balance-box">
+            <h4>Total Mama Payment: ৳ <span id="totalMamaPayment">0</span></h4>
+            <h4>Total Meal Cost: ৳ <span id="mamaMealCost">0</span></h4>
+            <h4>Remaining: ৳ <span id="remainingMamaBalance">0</span></h4>
+        </div>
+
+    </div>
+
+
     <div class="developer">
+
         Developed By <span>Farhad</span>
     </div>
 
