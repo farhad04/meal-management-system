@@ -268,3 +268,24 @@ background:rgba(255,255,255,.05);
 padding:12px;
 border-radius:12px;
 }
+
+
+.accept-btn{
+background:#22c55e;
+padding:8px 12px;
+border:none;
+border-radius:8px;
+color:white;
+font-weight:bold;
+cursor:pointer;
+}
+
+.pending{
+color:#f59e0b;
+font-weight:bold;
+}
+
+.accepted{
+color:#22c55e;
+font-weight:bold;
+}

@@ -65,6 +65,8 @@ memberCostList.style.visibility = "hidden";
 loadMeals();
 loadPayments();
 loadMamaPayments();
+loadDepositRequests();
+loadFinancialSummary();
 
 }
 
@@ -111,6 +113,8 @@ document.getElementById("memberCostList").style.display = "none";
 loadMeals();
 loadPayments();
 loadMamaPayments();
+loadDepositRequests();
+loadFinancialSummary();
 
 }else{
 alert("Wrong Password");
@@ -159,6 +163,8 @@ totalCost
 });
 
 alert("Meal Saved!");
+
+loadFinancialSummary();
 
 }
 
@@ -255,6 +261,8 @@ await db.collection("meals").doc(id).delete();
 
 alert("Meal Deleted");
 
+loadFinancialSummary();
+
 }
 
 }
@@ -288,7 +296,8 @@ return;
 await db.collection("payments").add({
 user: currentUser,
 date: paymentDate,
-amount: paymentAmount
+amount: paymentAmount,
+status:"pending"
 });
 
 alert("Payment Saved!");
@@ -309,7 +318,9 @@ if(currentUser !== "Admin" && item.user !== currentUser){
 return;
 }
 
+if(item.status === "accepted"){
 totalDeposit += item.amount;
+}
 
 });
 
@@ -346,6 +357,8 @@ amount:mamaAmount
 alert("Mama Payment Saved!");
 
 loadMamaPayments();
+loadDepositRequests();
+loadFinancialSummary();
 
 }
 
@@ -377,5 +390,141 @@ const mealCost = parseInt(document.getElementById("totalCost").innerText) || 0;
 document.getElementById("totalMamaPayment").innerText = totalMama;
 document.getElementById("mamaMealCost").innerText = mealCost;
 document.getElementById("remainingMamaBalance").innerText = totalMama - mealCost;
+
+}
+
+
+async function loadDepositRequests(){
+
+const panel = document.getElementById("adminDepositPanel");
+
+if(currentUser !== "Admin"){
+
+if(panel){
+panel.style.display = "none";
+}
+
+return;
+}
+
+if(panel){
+panel.style.display = "block";
+}
+
+const table = document.getElementById("depositTableBody");
+
+table.innerHTML = "";
+
+const snapshot = await db.collection("payments").get();
+
+snapshot.forEach((doc)=>{
+
+const item = doc.data();
+
+table.innerHTML += `
+<tr>
+<td>${item.user}</td>
+<td>${item.date}</td>
+<td>৳ ${item.amount}</td>
+<td class="${item.status === "accepted" ? "accepted" : "pending"}">
+${item.status}
+</td>
+<td>
+${item.status !== "accepted"
+? `<button onclick="acceptDeposit('${doc.id}')" class="accept-btn">Accept</button>`
+: "Done"}
+</td>
+</tr>
+`;
+
+});
+
+}
+
+async function acceptDeposit(id){
+
+await db.collection("payments").doc(id).update({
+status:"accepted"
+});
+
+alert("Deposit Accepted!");
+
+loadFinancialSummary();
+
+loadDepositRequests();
+loadFinancialSummary();
+
+}
+
+
+async function loadFinancialSummary(){
+
+if(currentUser !== "Admin"){
+return;
+}
+
+const memberCostList = document.getElementById("memberCostList");
+
+const paymentsSnapshot = await db.collection("payments").get();
+const mealsSnapshot = await db.collection("meals").get();
+
+const deposits = {};
+const costs = {};
+
+paymentsSnapshot.forEach((doc)=>{
+
+const item = doc.data();
+
+if(item.status === "accepted"){
+
+if(!deposits[item.user]){
+deposits[item.user] = 0;
+}
+
+deposits[item.user] += item.amount;
+
+}
+
+});
+
+mealsSnapshot.forEach((doc)=>{
+
+const item = doc.data();
+
+if(!costs[item.user]){
+costs[item.user] = 0;
+}
+
+costs[item.user] += item.totalCost;
+
+});
+
+let html = "";
+
+const users = new Set([
+...Object.keys(deposits),
+...Object.keys(costs)
+]);
+
+users.forEach((user)=>{
+
+const deposit = deposits[user] || 0;
+const cost = costs[user] || 0;
+const balance = deposit - cost;
+
+html += `
+<div class="member-item">
+<div>
+<strong>${user}</strong><br>
+Deposit: ৳ ${deposit}<br>
+Meal Cost: ৳ ${cost}<br>
+Balance: ৳ ${balance}
+</div>
+</div>
+`;
+
+});
+
+memberCostList.innerHTML = html;
 
 }
