@@ -3,7 +3,7 @@ const users = {
 Admin:"admin123",
 Farhad:"1234",
 Rakim:"1234",
-Hadi&Batman:"1234",
+HadiandBatman:"1234",
 Rizvi:"1234",
 Mehedi:"1234",
 Jahid:"1234"
