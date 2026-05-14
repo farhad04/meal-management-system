@@ -105,3 +105,19 @@ text-align:center;
 grid-template-columns:1fr;
 }
 }
+.developer{
+    text-align:center;
+    margin-top:40px;
+    padding:20px;
+    color:#94a3b8;
+    font-size:15px;
+    letter-spacing:1px;
+}
+
+.developer span{
+    background:linear-gradient(135deg,#7c3aed,#06b6d4);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    font-weight:bold;
+    font-size:18px;
+}
