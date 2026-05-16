@@ -293,8 +293,12 @@ alert("Enter payment info");
 return;
 }
 
+const selectedMember = currentUser === "Admin"
+? document.getElementById("paymentMember").value
+: currentUser;
+
 await db.collection("payments").add({
-user: currentUser,
+user: selectedMember,
 date: paymentDate,
 amount: paymentAmount,
 status:"pending"
@@ -526,5 +530,216 @@ Balance: ৳ ${balance}
 });
 
 memberCostList.innerHTML = html;
+
+}
+
+
+function toggleNotice(){
+
+const p=document.getElementById("noticePopup");
+
+if(p.style.display==="block"){
+p.style.display="none";
+}else{
+p.style.display="block";
+loadNotice();
+}
+
+}
+
+async function saveNotice(){
+
+const txt=document.getElementById("noticeInput").value;
+
+await db.collection("system").doc("notice").set({
+text:txt
+});
+
+alert("নোটিশ সেভ হয়েছে");
+
+}
+
+async function loadNotice(){
+
+const doc=await db.collection("system").doc("notice").get();
+
+if(doc.exists){
+document.getElementById("noticeText").innerText=doc.data().text;
+}
+
+}
+
+let clearIntervalId;
+
+function startClear(){
+
+let time=10;
+
+document.getElementById("cancelClearBtn").style.display="block";
+
+const box=document.getElementById("countdownBox");
+
+box.innerText=`${time} সেকেন্ড পরে সব হিসাব ক্লিয়ার হবে`;
+
+clearIntervalId=setInterval(()=>{
+
+time--;
+
+box.innerText=`${time} সেকেন্ড পরে সব হিসাব ক্লিয়ার হবে`;
+
+if(time<=0){
+
+clearInterval(clearIntervalId);
+
+clearAllMonthlyData();
+
+}
+
+},1000);
+
+}
+
+function cancelClear(){
+
+clearInterval(clearIntervalId);
+
+document.getElementById("countdownBox").innerText="ক্লিয়ার বাতিল করা হয়েছে";
+
+document.getElementById("cancelClearBtn").style.display="none";
+
+}
+
+async function clearAllMonthlyData(){
+
+const collections=["meals","payments","mamaPayments"];
+
+for(const col of collections){
+
+const snap=await db.collection(col).get();
+
+snap.forEach(async(doc)=>{
+
+await db.collection(col).doc(doc.id).delete();
+
+});
+
+}
+
+alert("সব হিসাব ক্লিয়ার হয়েছে");
+
+location.reload();
+
+}
+
+
+setTimeout(()=>{
+
+if(typeof currentUser !== "undefined" && currentUser==="Admin"){
+
+const panel=document.getElementById("adminPanelTools");
+
+if(panel){
+panel.style.display="block";
+}
+
+}
+
+},1000);
+
+
+async function loadMamaPaymentHistory(){
+
+const box=document.getElementById("mamaHistoryBox");
+
+if(!box) return;
+
+box.innerHTML="";
+
+const snap=await db.collection("mamaPayments")
+.orderBy("date","desc")
+.get();
+
+snap.forEach((doc)=>{
+
+const data=doc.data();
+
+box.innerHTML += `
+
+<div class="mama-history-item">
+📅 তারিখ: ${data.date || "N/A"}<br>
+💰 টাকা: ৳ ${data.amount || 0}
+</div>
+
+`;
+
+});
+
+}
+
+setTimeout(()=>{
+
+if(typeof currentUser !== "undefined" && currentUser==="Admin"){
+
+loadMamaPaymentHistory();
+
+}
+
+},1500);
+
+
+function toggleNextMeals(){
+
+const popup=document.getElementById("nextMealPopup");
+
+if(popup.style.display==="block"){
+popup.style.display="none";
+}else{
+popup.style.display="block";
+loadNextDayMeals();
+}
+
+}
+
+async function loadNextDayMeals(){
+
+const list=document.getElementById("nextMealList");
+
+list.innerHTML="";
+
+const tomorrow=new Date();
+
+tomorrow.setDate(tomorrow.getDate()+1);
+
+const nextDate=tomorrow.toISOString().split("T")[0];
+
+const snap=await db.collection("meals")
+.where("date","==",nextDate)
+.get();
+
+if(snap.empty){
+
+list.innerHTML='<div class="nextMealItem">কোনো মিল এন্ট্রি নেই</div>';
+
+return;
+
+}
+
+snap.forEach((doc)=>{
+
+const data=doc.data();
+
+list.innerHTML += `
+
+<div class="nextMealItem">
+👤 ${data.user}<br>
+🌅 সকাল: ${data.breakfast || 0}<br>
+☀️ দুপুর: ${data.lunch || 0}<br>
+🌙 রাত: ${data.dinner || 0}<br>
+📅 ${data.date}
+</div>
+
+`;
+
+});
 
 }
