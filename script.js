@@ -25,6 +25,17 @@ currentUser = savedUser;
 
 document.getElementById("loginPage").classList.add("hidden");
 document.getElementById("dashboard").classList.remove("hidden");
+setInterval(() => {
+
+if(typeof loadNotice === "function"){
+loadNotice();
+}
+
+if(typeof loadMamaPaymentHistory === "function"){
+loadMamaPaymentHistory();
+}
+
+}, 2000);
 
 document.getElementById("welcome").innerText = "Welcome " + currentUser;
 
@@ -82,9 +93,38 @@ if(users[username] === password){
 currentUser = username;
 
 localStorage.setItem("loggedUser", username);
+setTimeout(() => {
+
+const noticeBox = document.getElementById("noticeText");
+if(noticeBox){
+loadNotice();
+}
+
+const mamaBox = document.getElementById("mamaHistoryBox");
+if(mamaBox){
+loadMamaPaymentHistory();
+}
+
+},1000);
 
 document.getElementById("loginPage").classList.add("hidden");
 document.getElementById("dashboard").classList.remove("hidden");
+setTimeout(async () => {
+
+if(typeof loadNotice === "function"){
+await loadNotice();
+}
+
+if(typeof loadMamaPaymentHistory === "function"){
+await loadMamaPaymentHistory();
+}
+
+if(typeof loadNextDayMeals === "function"){
+await loadNextDayMeals();
+}
+
+},1500);
+
 
 document.getElementById("welcome").innerText = "Welcome " + username;
 
@@ -214,18 +254,62 @@ table.innerHTML += `
 <td>${item.totalMeal}</td>
 <td>৳ ${item.totalCost}</td>
 <td>
-${currentUser === "Admin" ? `<button onclick="deleteMeal('${doc.id}')" class="delete-btn">Delete</button>` : ""}
+${currentUser === "Admin" ? `
+<button onclick="deleteMeal('${doc.id}')" class="delete-btn">Delete</button>
+<button onclick="editMeal('${doc.id}')" class="edit-btn">Edit</button>
+` : ""}
 </td>
 </tr>
 `;
 
 });
 
+
+// ADMIN next-day stats only
+if(currentUser === "Admin"){
+
+const tomorrow = new Date();
+tomorrow.setDate(tomorrow.getDate()+1);
+
+const nextDate = tomorrow.toISOString().split("T")[0];
+
+let nextBreakfast = 0;
+let nextLunch = 0;
+let nextDinner = 0;
+
+snapshot.forEach((doc)=>{
+
+const item = doc.data();
+
+if(item.date === nextDate){
+
+nextBreakfast += Number(item.breakfast || 0);
+nextLunch += Number(item.lunch || 0);
+nextDinner += Number(item.dinner || 0);
+
+}
+
+});
+
+document.getElementById("totalBreakfast").innerText = nextBreakfast;
+document.getElementById("totalLunch").innerText = nextLunch;
+document.getElementById("totalDinner").innerText = nextDinner;
+
+// keep old totals
+document.getElementById("totalMeals").innerText = totalMeals;
+document.getElementById("totalCost").innerText = totalCost;
+
+}else{
+
+// MEMBER dashboard unchanged
 document.getElementById("totalBreakfast").innerText = totalBreakfast;
 document.getElementById("totalLunch").innerText = totalLunch;
 document.getElementById("totalDinner").innerText = totalDinner;
 document.getElementById("totalMeals").innerText = totalMeals;
 document.getElementById("totalCost").innerText = totalCost;
+
+}
+
 
 if(currentUser === "Admin"){
 
@@ -435,7 +519,10 @@ ${item.status}
 </td>
 <td>
 ${item.status !== "accepted"
-? `<button onclick="acceptDeposit('${doc.id}')" class="accept-btn">Accept</button>`
+? `
+<button onclick="acceptDeposit('${doc.id}')" class="accept-btn">Accept</button>
+<button onclick="declineDeposit('${doc.id}')" class="decline-btn">Decline</button>
+`
 : "Done"}
 </td>
 </tr>
@@ -741,5 +828,61 @@ list.innerHTML += `
 `;
 
 });
+
+}
+
+
+async function editMeal(id){
+
+if(currentUser !== "Admin"){
+return;
+}
+
+const breakfast = prompt("সকাল");
+const lunch = prompt("দুপুর");
+const dinner = prompt("রাত");
+
+await db.collection("meals").doc(id).update({
+breakfast:Number(breakfast || 0),
+lunch:Number(lunch || 0),
+dinner:Number(dinner || 0),
+totalMeal:Number(breakfast || 0)+Number(lunch || 0)+Number(dinner || 0),
+totalCost:(Number(breakfast || 0)*20)+(Number(lunch || 0)*50)+(Number(dinner || 0)*50)
+});
+
+alert("Meal Updated");
+location.reload();
+
+}
+
+
+// MEMBER PAYMENT DROPDOWN FIX
+setTimeout(()=>{
+
+const paymentSelect = document.getElementById("paymentMember");
+
+if(paymentSelect && currentUser !== "Admin"){
+
+paymentSelect.innerHTML = `<option value="${currentUser}">${currentUser}</option>`;
+
+}
+
+},500);
+
+
+
+async function declineDeposit(id){
+
+const confirmDecline = confirm("Decline this deposit request?");
+
+if(!confirmDecline){
+return;
+}
+
+await db.collection("payments").doc(id).delete();
+
+alert("Deposit Declined!");
+
+loadDepositRequests();
 
 }
