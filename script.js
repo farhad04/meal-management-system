@@ -666,19 +666,29 @@ document.getElementById("cancelClearBtn").style.display="block";
 
 const box=document.getElementById("countdownBox");
 
-box.innerText=`${time} সেকেন্ড পরে সব হিসাব ক্লিয়ার হবে`;
+box.innerText=`${time} সেকেন্ড পরে Confirm আসবে`;
 
 clearIntervalId=setInterval(()=>{
 
 time--;
 
-box.innerText=`${time} সেকেন্ড পরে সব হিসাব ক্লিয়ার হবে`;
+box.innerText=`${time} সেকেন্ড পরে Confirm আসবে`;
 
 if(time<=0){
 
 clearInterval(clearIntervalId);
 
+const finalConfirm = confirm("আপনি কি সত্যিই মাস ক্লিয়ার করবেন?");
+
+if(finalConfirm){
+
 clearAllMonthlyData();
+
+}else{
+
+box.innerText="মাস ক্লিয়ার বাতিল হয়েছে";
+
+}
 
 }
 
@@ -704,15 +714,45 @@ for(const col of collections){
 
 const snap=await db.collection(col).get();
 
-snap.forEach(async(doc)=>{
+for(const docItem of snap.docs){
 
-await db.collection(col).doc(doc.id).delete();
+await db.collection("backup_"+col).doc(docItem.id).set(docItem.data());
 
-});
+await db.collection(col).doc(docItem.id).delete();
 
 }
 
-alert("সব হিসাব ক্লিয়ার হয়েছে");
+}
+
+alert("সব হিসাব ক্লিয়ার হয়েছে এবং Backup Save হয়েছে");
+
+location.reload();
+
+}
+
+async function restoreBackup(){
+
+const ask = confirm("Backup Restore করবেন?");
+
+if(!ask){
+return;
+}
+
+const collections=["meals","payments","mamaPayments"];
+
+for(const col of collections){
+
+const snap=await db.collection("backup_"+col).get();
+
+for(const docItem of snap.docs){
+
+await db.collection(col).doc(docItem.id).set(docItem.data());
+
+}
+
+}
+
+alert("Backup Restore Complete!");
 
 location.reload();
 
