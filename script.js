@@ -425,8 +425,8 @@ document.getElementById("currentBalance").innerText = totalDeposit - usedCost;
 
 async function saveMamaPayment(){
 
-const mamaDate = document.getElementById("mamaDate").value;
-const mamaAmount = parseInt(document.getElementById("mamaAmount").value);
+const mamaDate = document.getElementById("AliVaiDate").value;
+const mamaAmount = parseInt(document.getElementById("AliVaiAmount").value);
 
 if(currentUser !== "Admin"){
 return;
@@ -475,9 +475,9 @@ totalMama += item.amount;
 
 const mealCost = parseInt(document.getElementById("totalCost").innerText) || 0;
 
-document.getElementById("totalMamaPayment").innerText = totalMama;
-document.getElementById("mamaMealCost").innerText = mealCost;
-document.getElementById("remainingMamaBalance").innerText = totalMama - mealCost;
+document.getElementById("totalAliVaiPayment").innerText = totalMama;
+document.getElementById("AliVaiMealCost").innerText = mealCost;
+document.getElementById("remainingAliVaiBalance").innerText = totalMama - mealCost;
 
 }
 
