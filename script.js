@@ -31,10 +31,6 @@ if(typeof loadNotice === "function"){
 loadNotice();
 }
 
-if(typeof loadMamaPaymentHistory === "function"){
-loadMamaPaymentHistory();
-}
-
 }, 2000);
 
 document.getElementById("welcome").innerText = "Welcome " + currentUser;
@@ -76,6 +72,7 @@ memberCostList.style.visibility = "hidden";
 loadMeals();
 loadPayments();
 loadMamaPayments();
+loadMamaPaymentHistory();
 loadDepositRequests();
 loadFinancialSummary();
 
@@ -153,6 +150,7 @@ document.getElementById("memberCostList").style.display = "none";
 loadMeals();
 loadPayments();
 loadMamaPayments();
+loadMamaPaymentHistory();
 loadDepositRequests();
 loadFinancialSummary();
 
@@ -445,6 +443,7 @@ amount:mamaAmount
 alert("Mama Payment Saved!");
 
 loadMamaPayments();
+loadMamaPaymentHistory();
 loadDepositRequests();
 loadFinancialSummary();
 
@@ -776,7 +775,7 @@ panel.style.display="block";
 
 async function loadMamaPaymentHistory(){
 
-const box=document.getElementById("mamaHistoryBox");
+const box=document.getElementById("AliVaiHistoryBox");
 
 if(!box) return;
 
@@ -794,7 +793,11 @@ box.innerHTML += `
 
 <div class="mama-history-item">
 📅 তারিখ: ${data.date || "N/A"}<br>
-💰 টাকা: ৳ ${data.amount || 0}
+💰 টাকা: ৳ ${data.amount || 0}<br><br>
+
+<button onclick="editAliVaiPayment('${doc.id}')">✏️ Edit</button>
+<button onclick="deleteAliVaiPayment('${doc.id}')">🗑 Delete</button>
+
 </div>
 
 `;
@@ -802,16 +805,6 @@ box.innerHTML += `
 });
 
 }
-
-setTimeout(()=>{
-
-if(typeof currentUser !== "undefined" && currentUser==="Admin"){
-
-loadMamaPaymentHistory();
-
-}
-
-},1500);
 
 
 function toggleNextMeals(){
@@ -926,3 +919,16 @@ alert("Deposit Declined!");
 loadDepositRequests();
 
 }
+
+
+setTimeout(()=>{
+
+if(typeof currentUser !== "undefined" && currentUser==="Admin"){
+
+if(typeof loadMamaPaymentHistory === "function"){
+loadMamaPaymentHistory();
+}
+
+}
+
+},1000);
