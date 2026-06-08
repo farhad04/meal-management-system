@@ -1,0 +1,21 @@
+{
+  "name":"Bachelor Meal System",
+  "short_name":"Meal System",
+  "start_url":"./index.html",
+  "display":"standalone",
+  "background_color":"#ffffff",
+  "theme_color":"#0f766e",
+  "description":"Bachelor Meal Management System",
+  "icons":[
+    {
+      "src":"logo.png",
+      "sizes":"192x192",
+      "type":"image/png"
+    },
+    {
+      "src":"logo.png",
+      "sizes":"512x512",
+      "type":"image/png"
+    }
+  ]
+}

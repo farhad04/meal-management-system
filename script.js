@@ -37,7 +37,7 @@ document.getElementById("welcome").innerText = "Welcome " + currentUser;
 
 if(currentUser === "Admin"){
 document.getElementById("mealBox").style.display = "none";
-document.getElementById("tableTitle").innerText = "All Member Meal History";
+document.getElementById("tableTitle").innerText = "All Member মিলের হিসাব";
 
 const memberCostCard = document.querySelector(".member-cost-card");
 const memberCostList = document.getElementById("memberCostList");
@@ -53,7 +53,7 @@ memberCostList.style.visibility = "visible";
 memberCostList.classList.remove("hidden");
 }
 }else{
-document.getElementById("tableTitle").innerText = "Your Meal History";
+document.getElementById("tableTitle").innerText = "Your মিলের হিসাব";
 
 const memberCostCard = document.querySelector(".member-cost-card");
 const memberCostList = document.getElementById("memberCostList");
@@ -127,7 +127,7 @@ document.getElementById("welcome").innerText = "Welcome " + username;
 
 if(username === "Admin"){
 document.getElementById("mealBox").style.display = "none";
-document.getElementById("tableTitle").innerText = "All Member Meal History";
+document.getElementById("tableTitle").innerText = "All Member মিলের হিসাব";
 
 if(document.querySelector(".member-cost-card")){
 document.querySelector(".member-cost-card").style.display = "block";
@@ -135,7 +135,7 @@ document.querySelector(".member-cost-card").style.display = "block";
 
 }else{
 
-document.getElementById("tableTitle").innerText = "Your Meal History";
+document.getElementById("tableTitle").innerText = "Your মিলের হিসাব";
 
 if(document.querySelector(".member-cost-card")){
 document.querySelector(".member-cost-card").style.display = "none";
@@ -155,7 +155,7 @@ loadDepositRequests();
 loadFinancialSummary();
 
 }else{
-alert("Wrong Password");
+alert("ভুল পাসওয়ার্ড");
 }
 
 }
@@ -253,8 +253,8 @@ table.innerHTML += `
 <td>৳ ${item.totalCost}</td>
 <td>
 ${currentUser === "Admin" ? `
-<button onclick="deleteMeal('${doc.id}')" class="delete-btn">Delete</button>
-<button onclick="editMeal('${doc.id}')" class="edit-btn">Edit</button>
+<button onclick="deleteMeal('${doc.id}')" class="delete-btn">মুছুন</button>
+<button onclick="editMeal('${doc.id}')" class="edit-btn">এডিট</button>
 ` : ""}
 </td>
 </tr>
@@ -335,13 +335,13 @@ document.getElementById("grandTotalCost").innerText = totalCost;
 
 async function deleteMeal(id){
 
-const confirmDelete = confirm("Delete this meal?");
+const confirmমুছুন = confirm("মুছুন this meal?");
 
-if(confirmDelete){
+if(confirmমুছুন){
 
 await db.collection("meals").doc(id).delete();
 
-alert("Meal Deleted");
+alert("Meal মুছুনd");
 
 loadFinancialSummary();
 
@@ -519,8 +519,8 @@ ${item.status}
 <td>
 ${item.status !== "accepted"
 ? `
-<button onclick="acceptDeposit('${doc.id}')" class="accept-btn">Accept</button>
-<button onclick="declineDeposit('${doc.id}')" class="decline-btn">Decline</button>
+<button onclick="acceptDeposit('${doc.id}')" class="accept-btn">গ্রহণ</button>
+<button onclick="declineDeposit('${doc.id}')" class="decline-btn">বাতিল</button>
 `
 : "Done"}
 </td>
@@ -537,7 +537,7 @@ await db.collection("payments").doc(id).update({
 status:"accepted"
 });
 
-alert("Deposit Accepted!");
+alert("Deposit গ্রহণed!");
 
 loadFinancialSummary();
 
@@ -795,8 +795,10 @@ box.innerHTML += `
 📅 তারিখ: ${data.date || "N/A"}<br>
 💰 টাকা: ৳ ${data.amount || 0}<br><br>
 
-<button onclick="editAliVaiPayment('${doc.id}')">✏️ Edit</button>
-<button onclick="deleteAliVaiPayment('${doc.id}')">🗑 Delete</button>
+${currentUser === "Admin" ? `
+<button onclick="editAliVaiPayment('${doc.id}')">✏️ এডিট</button>
+<button onclick="deleteAliVaiPayment('${doc.id}')">🗑 মুছুন</button>
+` : ""}
 
 </div>
 
@@ -906,29 +908,18 @@ paymentSelect.innerHTML = `<option value="${currentUser}">${currentUser}</option
 
 async function declineDeposit(id){
 
-const confirmDecline = confirm("Decline this deposit request?");
+const confirmবাতিল = confirm("বাতিল this deposit request?");
 
-if(!confirmDecline){
+if(!confirmবাতিল){
 return;
 }
 
 await db.collection("payments").doc(id).delete();
 
-alert("Deposit Declined!");
+alert("Deposit বাতিলd!");
 
 loadDepositRequests();
 
 }
 
 
-setTimeout(()=>{
-
-if(typeof currentUser !== "undefined" && currentUser==="Admin"){
-
-if(typeof loadMamaPaymentHistory === "function"){
-loadMamaPaymentHistory();
-}
-
-}
-
-},1000);

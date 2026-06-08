@@ -10,6 +10,7 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<link rel="manifest" href="manifest.json">
 </head>
 <body>
 
@@ -34,7 +35,7 @@
 
         <input type="password" id="password" placeholder="Password">
 
-        <button onclick="login()">Login</button>
+        <button onclick="login()">লগইন</button>
     </div>
 </div>
 
@@ -58,7 +59,7 @@
             <span>Realtime Dashboard</span>
         </div>
 
-        <button onclick="logout()">Logout</button>
+        <button onclick="logout()">লগআউট</button>
     </div>
 
     <div class="notice-banner">
@@ -69,7 +70,7 @@
 
         <div class="meal-card" id="mealBox">
 
-            <h3>Daily Meal Entry</h3>
+            <h3>দৈনিক মিল এন্ট্রি</h3>
 
             <input type="date" id="mealDate">
 
@@ -110,34 +111,34 @@
 
             </div>
 
-            <button onclick="saveMeal()">Save Meal</button>
+            <button onclick="saveMeal()">মিল সংরক্ষণ করুন</button>
 
         </div>
 
         <div class="stats-grid">
 
             <div class="stat-card">
-                <h4>Total Breakfast</h4>
+                <h4>🌅 সকাল</h4>
                 <p id="totalBreakfast">0</p>
             </div>
 
             <div class="stat-card">
-                <h4>Total Lunch</h4>
+                <h4>☀️ দুপুর</h4>
                 <p id="totalLunch">0</p>
             </div>
 
             <div class="stat-card">
-                <h4>Total Dinner</h4>
+                <h4>🌙 রাত</h4>
                 <p id="totalDinner">0</p>
             </div>
 
             <div class="stat-card">
-                <h4>Total Meals</h4>
+                <h4>🍽️ মোট মিলs</h4>
                 <p id="totalMeals">0</p>
             </div>
 
             <div class="stat-card">
-                <h4>Total Cost</h4>
+                <h4>💰 মোট খরচ</h4>
                 <p>৳ <span id="totalCost">0</span></p>
             </div>
 
@@ -148,7 +149,7 @@
     
         <div class="payment-card" id="paymentBox">
 
-            <h3>Payment Entry</h3>
+            <h3>টাকা জমা</h3>
 
             <input type="date" id="paymentDate">
 
@@ -163,11 +164,11 @@
 
 <input type="number" id="paymentAmount" placeholder="টাকার পরিমাণ">
 
-            <button onclick="savePayment()">Save Payment</button>
+            <button onclick="savePayment()">টাকা জমা দিন</button>
 
             <div class="balance-box">
                 <h4>Total Deposit: ৳ <span id="totalDeposit">0</span></h4>
-                <h4>Meal Cost: ৳ <span id="usedCost">0</span></h4>
+                <h4>Meal 💰 খরচ: ৳ <span id="usedCost">0</span></h4>
                 <h4>Current Balance: ৳ <span id="currentBalance">0</span></h4>
             </div>
 
@@ -187,20 +188,20 @@
 <button onclick="toggleNextMeals()">বন্ধ</button>
 </div>
 
-<h3 id="tableTitle">Meal History</h3>
+<h3 id="tableTitle">মিলের হিসাব</h3>
 
         <div class="table-wrapper">
 
             <table>
                 <thead>
                     <tr>
-                        <th>Date</th>
-                        <th>Name</th>
-                        <th>Breakfast</th>
-                        <th>Lunch</th>
-                        <th>Dinner</th>
-                        <th>Total Meal</th>
-                        <th>Cost</th><th>Action</th>
+                        <th>তারিখ</th>
+                        <th>নাম</th>
+                        <th>সকাল</th>
+                        <th>দুপুর</th>
+                        <th>রাত</th>
+                        <th>🍽️ মোট মিল</th>
+                        <th>💰 খরচ</th><th>⚙️ কার্যক্রম</th>
                     </tr>
                 </thead>
 
@@ -214,7 +215,7 @@
 
     
     <div class="member-cost-card" onclick="toggleMemberCosts()">
-        <h3>Total Member Cost</h3>
+        <h3>Total Member 💰 খরচ</h3>
         <p>৳ <span id="grandTotalCost">0</span></p>
     </div>
 
@@ -233,7 +234,7 @@
 
         <div class="balance-box">
             <h4>Total AliVai Payment: ৳ <span id="totalAliVaiPayment">0</span></h4>
-            <h4>Total Meal Cost: ৳ <span id="AliVaiMealCost">0</span></h4>
+            <h4>🍽️ মোট মিল 💰 খরচ: ৳ <span id="AliVaiMealCost">0</span></h4>
             <h4>Remaining: ৳ <span id="remainingAliVaiBalance">0</span></h4>
         </div>
 
@@ -247,11 +248,11 @@
         <table>
             <thead>
                 <tr>
-                    <th>Name</th>
-                    <th>Date</th>
+                    <th>নাম</th>
+                    <th>তারিখ</th>
                     <th>Amount</th>
                     <th>Status</th>
-                    <th>Action</th>
+                    <th>⚙️ কার্যক্রম</th>
                 </tr>
             </thead>
             <tbody id="depositTableBody"></tbody>
@@ -293,5 +294,10 @@
 <script src="firebase-config.js"></script>
 <script src="script.js"></script>
 
+<script>
+if('serviceWorker' in navigator){
+navigator.serviceWorker.register('service-worker.js');
+}
+</script>
 </body>
 </html>
