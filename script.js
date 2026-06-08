@@ -923,3 +923,42 @@ loadDepositRequests();
 }
 
 
+
+
+async function editAliVaiPayment(id){
+
+const docRef = await db.collection("mamaPayments").doc(id).get();
+
+if(!docRef.exists) return;
+
+const data = docRef.data();
+
+const newDate = prompt("নতুন তারিখ", data.date || "");
+const newAmount = prompt("নতুন টাকার পরিমাণ", data.amount || 0);
+
+if(newDate===null || newAmount===null) return;
+
+await db.collection("mamaPayments").doc(id).update({
+date:newDate,
+amount:Number(newAmount)
+});
+
+alert("পেমেন্ট আপডেট হয়েছে");
+loadMamaPaymentHistory();
+loadMamaPayments();
+
+}
+
+async function deleteAliVaiPayment(id){
+
+const ok = confirm("এই পেমেন্ট মুছে ফেলবেন?");
+
+if(!ok) return;
+
+await db.collection("mamaPayments").doc(id).delete();
+
+alert("পেমেন্ট মুছে ফেলা হয়েছে");
+loadMamaPaymentHistory();
+loadMamaPayments();
+
+}
