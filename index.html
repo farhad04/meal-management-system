@@ -72,7 +72,11 @@
 
             <h3>দৈনিক মিল এন্ট্রি</h3>
 
-            <input type="date" id="mealDate">
+            <label>শুরু তারিখ</label>
+<input type="date" id="fromDate">
+
+<label>শেষ তারিখ</label>
+<input type="date" id="toDate">
 
             <div class="meal-grid">
 
@@ -188,7 +192,7 @@
 <button onclick="toggleNextMeals()">বন্ধ</button>
 </div>
 
-<h3 id="tableTitle">মিলের হিসাব</h3>
+<button id="fullscreenMealBtn" onclick="openMealFullscreen()" style="float:right">⛶ ফুল স্ক্রিন</button><h3 id="tableTitle">মিলের হিসাব</h3>
 
         <div class="table-wrapper">
 
@@ -299,5 +303,16 @@ if('serviceWorker' in navigator){
 navigator.serviceWorker.register('service-worker.js');
 }
 </script>
+
+<div id="mealFullscreenModal" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;background:#fff;z-index:99999;overflow:hidden;">
+<div style="padding:10px;background:white;margin:10px;">
+<button onclick="closeMealFullscreen()">✖ বন্ধ</button>
+
+<button onclick="printMealSheet()">📄 PDF/🖨️প্রিন্ট</button>
+    <div id="mealFullscreenContent" style="overflow:auto;height:90vh;width:100%;"></div>
+
+</div>
+</div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </body>
 </html>

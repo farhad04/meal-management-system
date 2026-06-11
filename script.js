@@ -18,7 +18,24 @@ let currentUser = "";
 window.onload = function(){
 
 const savedUser = localStorage.getItem("loggedUser");
+const tomorrow = new Date();
 
+tomorrow.setDate(tomorrow.getDate()+1);
+
+const tomorrowDate =
+tomorrow.toISOString().split("T")[0];
+
+setTimeout(()=>{
+
+if(document.getElementById("fromDate")){
+document.getElementById("fromDate").value = tomorrowDate;
+}
+
+if(document.getElementById("toDate")){
+document.getElementById("toDate").value = tomorrowDate;
+}
+
+},100);
 if(savedUser){
 
 currentUser = savedUser;
@@ -88,6 +105,14 @@ const password = document.getElementById("password").value;
 if(users[username] === password){
 
 currentUser = username;
+    const paymentSelect = document.getElementById("paymentMember");
+
+if(paymentSelect && username !== "Admin"){
+
+paymentSelect.innerHTML =
+`<option value="${username}">${username}</option>`;
+
+}
 
 localStorage.setItem("loggedUser", username);
 setTimeout(() => {
@@ -162,11 +187,14 @@ alert("ভুল পাসওয়ার্ড");
 
 async function saveMeal(){
 
-const date = document.getElementById("mealDate").value;
+const fromDate = document.getElementById("fromDate").value;
+const toDate = document.getElementById("toDate").value;
 
 const today = new Date().toISOString().split("T")[0];
 
-if(currentUser !== "Admin" && date < today){
+if(currentUser !== "Admin"){
+
+if(fromDate < today || toDate < today){
 
 alert("Previous day meal cannot be changed!");
 
@@ -174,8 +202,10 @@ return;
 
 }
 
-if(date === ""){
-alert("Select Date");
+}
+
+if(fromDate === "" || toDate === ""){
+alert("তারিখ নির্বাচন করুন");
 return;
 }
 
@@ -190,7 +220,20 @@ const totalCost =
 (lunch * LUNCH_RATE) +
 (dinner * DINNER_RATE);
 
-await db.collection("meals").doc(currentUser + "_" + date).set({
+const start = new Date(fromDate);
+const end = new Date(toDate);
+
+for(
+let d = new Date(start);
+d <= end;
+d.setDate(d.getDate()+1)
+){
+
+const date = d.toISOString().split("T")[0];
+
+await db.collection("meals")
+.doc(currentUser + "_" + date)
+.set({
 user: currentUser,
 date,
 breakfast,
@@ -199,6 +242,8 @@ dinner,
 totalMeal,
 totalCost
 });
+
+}
 
 alert("Meal Saved!");
 
@@ -960,5 +1005,359 @@ await db.collection("mamaPayments").doc(id).delete();
 alert("পেমেন্ট মুছে ফেলা হয়েছে");
 loadMamaPaymentHistory();
 loadMamaPayments();
+
+}
+
+
+
+async function openMealFullscreen(){
+
+const modal = document.getElementById("mealFullscreenModal");
+const content = document.getElementById("mealFullscreenContent");
+
+const snap = await db.collection("meals").get();
+
+const users = [];
+const mealMap = {};
+
+snap.forEach((doc)=>{
+
+const item = doc.data();
+
+if(!users.includes(item.user)){
+users.push(item.user);
+}
+
+const day = item.date.split("-")[2];
+
+if(!mealMap[day]){
+mealMap[day] = {};
+}
+
+mealMap[day][item.user] = {
+b:item.breakfast || 0,
+l:item.lunch || 0,
+d:item.dinner || 0
+};
+
+});
+
+users.sort();
+
+let html = `
+<div style="overflow:auto;width:100%;height:90vh">
+<table border="1" style="border-collapse:collapse;width:max-content;min-width:100%;text-align:center;">
+<thead>
+<tr>
+<th rowspan="2">তারিখ</th>
+`;
+
+users.forEach(user=>{
+html += `<th colspan="3">${user}</th>`;
+});
+    html += `<th colspan="3">মোট</th>`;
+
+html += `</tr><tr>`;
+
+users.forEach(()=>{
+html += `
+<th>🌅</th>
+<th>☀️</th>
+<th>🌙</th>
+`;
+});
+    html += `
+<th>🌅</th>
+<th>☀️</th>
+<th>🌙</th>
+`;
+
+html += `</tr></thead><tbody>`;
+
+for(let d=1; d<=31; d++){
+
+const day = String(d).padStart(2,"0");
+
+html += `<tr><td><b>${day}</b></td>`;
+    
+
+users.forEach(user=>{
+
+const meal = mealMap[day]?.[user];
+
+html += `
+<td>${meal ? meal.b : ""}</td>
+<td>${meal ? meal.l : ""}</td>
+<td>${meal ? meal.d : ""}</td>
+`;
+
+});
+    let dayB = 0;
+let dayL = 0;
+let dayD = 0;
+
+users.forEach(user=>{
+
+const meal = mealMap[day]?.[user];
+
+if(meal){
+dayB += Number(meal.b || 0);
+dayL += Number(meal.l || 0);
+dayD += Number(meal.d || 0);
+}
+
+});
+
+html += `
+<td><b>${dayB}</b></td>
+<td><b>${dayL}</b></td>
+<td><b>${dayD}</b></td>
+`;
+
+html += `</tr>`;
+}
+    html += `<tr style="background:#374151;color:white;font-weight:bold;">
+<td>T</td>`;
+
+users.forEach(user=>{
+
+let totalB = 0;
+let totalL = 0;
+let totalD = 0;
+
+for(let d=1; d<=31; d++){
+
+const day = String(d).padStart(2,"0");
+const meal = mealMap[day]?.[user];
+
+if(meal){
+totalB += Number(meal.b || 0);
+totalL += Number(meal.l || 0);
+totalD += Number(meal.d || 0);
+}
+
+}
+
+html += `
+<td>${totalB}</td>
+<td>${totalL}</td>
+<td>${totalD}</td>
+`;
+
+});
+    let grandB = 0;
+let grandL = 0;
+let grandD = 0;
+
+users.forEach(user=>{
+
+for(let d=1; d<=31; d++){
+
+const day = String(d).padStart(2,"0");
+const meal = mealMap[day]?.[user];
+
+if(meal){
+grandB += Number(meal.b || 0);
+grandL += Number(meal.l || 0);
+grandD += Number(meal.d || 0);
+}
+
+}
+
+});
+
+html += `
+<td><b>${grandB}</b></td>
+<td><b>${grandL}</b></td>
+<td><b>${grandD}</b></td>
+`;
+
+html += `</tr>`;
+    html += `<tr style="background:#374151;color:#00ff88;font-weight:bold;">
+<td>৳</td>`;
+
+users.forEach(user=>{
+
+let totalCost = 0;
+
+for(let d=1; d<=31; d++){
+
+const day = String(d).padStart(2,"0");
+const meal = mealMap[day]?.[user];
+
+if(meal){
+
+totalCost +=
+(Number(meal.b || 0) * 20) +
+(Number(meal.l || 0) * 50) +
+(Number(meal.d || 0) * 50);
+
+}
+
+}
+
+html += `
+<td colspan="3">৳ ${totalCost}</td>
+`;
+
+});
+    let grandCost = 0;
+
+users.forEach(user=>{
+
+for(let d=1; d<=31; d++){
+
+const day = String(d).padStart(2,"0");
+const meal = mealMap[day]?.[user];
+
+if(meal){
+
+grandCost +=
+(Number(meal.b || 0) * 20) +
+(Number(meal.l || 0) * 50) +
+(Number(meal.d || 0) * 50);
+
+}
+
+}
+
+});
+
+html += `
+<td colspan="3"><b>৳ ${grandCost}</b></td>
+`;
+
+html += `</tr>`;
+    html += `<tr style="background:#1f2937;color:#00e676;font-weight:bold;">
+<td>জমা</td>`;
+
+const paymentSnap = await db.collection("payments").get();
+
+users.forEach(user=>{
+
+let totalDeposit = 0;
+
+paymentSnap.forEach(doc=>{
+
+const pay = doc.data();
+
+if(pay.user === user && pay.status === "accepted"){
+totalDeposit += Number(pay.amount || 0);
+}
+
+});
+
+html += `<td colspan="3">৳ ${totalDeposit}</td>`;
+
+});
+
+html += `<td colspan="3">-</td>`;
+html += `</tr>`;
+    html += `<tr style="background:#0f172a;color:#38bdf8;font-weight:bold;">
+<td>ব্যালেন্স</td>`;
+
+const paymentSnap2 = await db.collection("payments").get();
+
+users.forEach(user=>{
+
+let totalDeposit = 0;
+let totalCost = 0;
+
+paymentSnap2.forEach(doc=>{
+
+const pay = doc.data();
+
+if(pay.user === user && pay.status === "accepted"){
+totalDeposit += Number(pay.amount || 0);
+}
+
+});
+
+for(let d=1; d<=31; d++){
+
+const day = String(d).padStart(2,"0");
+const meal = mealMap[day]?.[user];
+
+if(meal){
+
+totalCost +=
+(Number(meal.b || 0) * 20) +
+(Number(meal.l || 0) * 50) +
+(Number(meal.d || 0) * 50);
+
+}
+
+}
+
+html += `<td colspan="3">৳ ${totalDeposit - totalCost}</td>`;
+
+});
+
+html += `<td colspan="3">-</td>`;
+html += `</tr>`;
+
+html += `</tbody></table></div>`;
+
+content.innerHTML = html;
+modal.style.display = "block";
+
+}
+
+function closeMealFullscreen(){
+const modal=document.getElementById("mealFullscreenModal");
+if(modal) modal.style.display="none";
+}
+
+
+async function openMonthlyMealSheet(){
+alert("মাসিক মিল শিট ভিউ পরবর্তী আপডেটে যোগ করা হয়েছে।");
+}
+async function downloadMealSheetImage(){
+
+const target = document.getElementById("mealFullscreenContent");
+
+const canvas = await html2canvas(target,{scale:2});
+
+const link = document.createElement("a");
+
+link.download = "Meal-Sheet.png";
+link.href = canvas.toDataURL("image/png");
+
+link.click();
+
+}
+
+function printMealSheet(){
+
+const content =
+document.getElementById("mealFullscreenContent").innerHTML;
+
+const printWindow =
+window.open("","","width=1200,height=800");
+
+printWindow.document.write(`
+<html>
+<head>
+<title>Meal Sheet</title>
+<style>
+table{
+border-collapse:collapse;
+width:100%;
+}
+th,td{
+border:1px solid black;
+padding:4px;
+text-align:center;
+}
+</style>
+</head>
+<body>
+${content}
+</body>
+</html>
+`);
+
+printWindow.document.close();
+printWindow.print();
 
 }
