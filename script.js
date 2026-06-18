@@ -1361,3 +1361,27 @@ printWindow.document.close();
 printWindow.print();
 
 }
+const messaging = firebase.messaging();
+
+async function enableNotification() {
+
+const permission = await Notification.requestPermission();
+
+if(permission === "granted") {
+
+const token = await messaging.getToken({
+vapidKey: "BJD_AlGwhbfdqfgMJAi1wtETt5XAC_ab5Pz2cMx1Y8Y0tAPuN-pgW0250ab4xjMkGrEFlfHpazgZLxWEw4sURLw"
+});
+db.collection("fcmTokens").doc(currentUser).set({
+    token: token,
+    user: currentUser,
+    updatedAt: new Date().toISOString()
+});
+
+console.log("FCM Token:", token);
+
+}
+
+}
+
+enableNotification();
