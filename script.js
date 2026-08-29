@@ -190,6 +190,11 @@ async function saveMeal(){
 const fromDate = document.getElementById("fromDate").value;
 const toDate = document.getElementById("toDate").value;
 
+if(fromDate === "" || toDate === ""){
+alert("তারিখ নির্বাচন করুন");
+return;
+}
+
 const today = new Date().toISOString().split("T")[0];
 
 if(currentUser !== "Admin"){
@@ -197,21 +202,15 @@ if(currentUser !== "Admin"){
 if(fromDate < today || toDate < today){
 
 alert("Previous day meal cannot be changed!");
-
 return;
 
 }
 
 }
 
-if(fromDate === "" || toDate === ""){
-alert("তারিখ নির্বাচন করুন");
-return;
-}
-
-const breakfast = parseInt(document.getElementById("breakfast").value);
-const lunch = parseInt(document.getElementById("lunch").value);
-const dinner = parseInt(document.getElementById("dinner").value);
+const breakfast = parseInt(document.getElementById("breakfast").value) || 0;
+const lunch = parseInt(document.getElementById("lunch").value) || 0;
+const dinner = parseInt(document.getElementById("dinner").value) || 0;
 
 const totalMeal = breakfast + lunch + dinner;
 
@@ -220,56 +219,70 @@ const totalCost =
 (lunch * LUNCH_RATE) +
 (dinner * DINNER_RATE);
 
-const start = new Date(fromDate);
-const end = new Date(toDate);
+const start = new Date(fromDate + "T00:00:00");
+const end = new Date(toDate + "T00:00:00");
+
+for(
+let d = new Date(start);
+d <= end;
+d.setDate(d.getDate() + 1)
+){
+
+const date = d.getFullYear() + "-" +
+String(d.getMonth() + 1).padStart(2,"0") + "-" +
+String(d.getDate()).padStart(2,"0");
 
 const mealRef = db.collection("meals")
 .doc(currentUser + "_" + date);
 
 const existingMeal = await mealRef.get();
 
-if(currentUser !== "Admin" && existingMeal.exists){
+let createdTime = Date.now();
 
-    const oldData = existingMeal.data();
+if(existingMeal.exists){
 
-    if(oldData.createdAt){
+const oldData = existingMeal.data();
 
-        const createdTime = oldData.createdAt.toDate().getTime();
-        const nowTime = Date.now();
+if(
+currentUser !== "Admin" &&
+oldData.createdAt
+){
 
-        const hoursPassed =
-        (nowTime - createdTime) / (1000 * 60 * 60);
+const hoursPassed =
+(Date.now() - Number(oldData.createdAt))
+/ (1000 * 60 * 60);
 
-        if(hoursPassed >= 9){
+if(hoursPassed >= 9){
 
-            alert(
-                date + " সময়সীমা শেষ❗এখন আর মিল পরিবর্তন করা যাবে না!"
-            );
+alert(
+date + " সময়সীমা শেষ❗ এখন আর মিল পরিবর্তন করা যাবে না!"
+);
 
-            return;
+return;
 
-        }
+}
 
-    }
+}
+
+if(oldData.createdAt){
+createdTime = Number(oldData.createdAt);
+}
 
 }
 
 await mealRef.set({
-    user: currentUser,
-    date,
-    breakfast,
-    lunch,
-    dinner,
-    totalMeal,
-    totalCost,
-
-    createdAt: existingMeal.exists
-        ? existingMeal.data().createdAt
-        : firebase.firestore.FieldValue.serverTimestamp(),
-
-    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-
+user: currentUser,
+date,
+breakfast,
+lunch,
+dinner,
+totalMeal,
+totalCost,
+createdAt: createdTime,
+updatedAt: Date.now()
 });
+
+}
 
 alert("Meal Saved!");
 
