@@ -223,27 +223,53 @@ const totalCost =
 const start = new Date(fromDate);
 const end = new Date(toDate);
 
-for(
-let d = new Date(start);
-d <= end;
-d.setDate(d.getDate()+1)
-){
+const mealRef = db.collection("meals")
+.doc(currentUser + "_" + date);
 
-const date = d.toISOString().split("T")[0];
+const existingMeal = await mealRef.get();
 
-await db.collection("meals")
-.doc(currentUser + "_" + date)
-.set({
-user: currentUser,
-date,
-breakfast,
-lunch,
-dinner,
-totalMeal,
-totalCost
-});
+if(currentUser !== "Admin" && existingMeal.exists){
+
+    const oldData = existingMeal.data();
+
+    if(oldData.createdAt){
+
+        const createdTime = oldData.createdAt.toDate().getTime();
+        const nowTime = Date.now();
+
+        const hoursPassed =
+        (nowTime - createdTime) / (1000 * 60 * 60);
+
+        if(hoursPassed >= 9){
+
+            alert(
+                date + " সময়সীমা শেষ❗এখন আর মিল পরিবর্তন করা যাবে না!"
+            );
+
+            return;
+
+        }
+
+    }
 
 }
+
+await mealRef.set({
+    user: currentUser,
+    date,
+    breakfast,
+    lunch,
+    dinner,
+    totalMeal,
+    totalCost,
+
+    createdAt: existingMeal.exists
+        ? existingMeal.data().createdAt
+        : firebase.firestore.FieldValue.serverTimestamp(),
+
+    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+
+});
 
 alert("Meal Saved!");
 
