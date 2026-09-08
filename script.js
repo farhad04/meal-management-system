@@ -187,106 +187,177 @@ alert("ভুল পাসওয়ার্ড");
 
 async function saveMeal(){
 
-const fromDate = document.getElementById("fromDate").value;
-const toDate = document.getElementById("toDate").value;
+  const fromDate = document.getElementById("fromDate").value;
+  const toDate = document.getElementById("toDate").value;
 
-if(fromDate === "" || toDate === ""){
-alert("তারিখ নির্বাচন করুন");
-return;
-}
+  if(fromDate === "" || toDate === ""){
+    alert("তারিখ নির্বাচন করুন");
+    return;
+  }
 
-const today = new Date().toISOString().split("T")[0];
+  // আজকের তারিখ
+  const today = new Date();
 
-if(currentUser !== "Admin"){
+  const todayStr =
+    today.getFullYear() + "-" +
+    String(today.getMonth() + 1).padStart(2, "0") + "-" +
+    String(today.getDate()).padStart(2, "0");
 
-if(fromDate < today || toDate < today){
 
-alert("Previous day meal cannot be changed!");
-return;
+  // Member হলে আগের দিনের meal দেওয়া/পরিবর্তন করা যাবে না
+  if(currentUser !== "Admin"){
 
-}
+    if(fromDate < todayStr || toDate < todayStr){
 
-}
+      alert("Previous day meal cannot be changed!");
+      return;
 
-const breakfast = parseInt(document.getElementById("breakfast").value) || 0;
-const lunch = parseInt(document.getElementById("lunch").value) || 0;
-const dinner = parseInt(document.getElementById("dinner").value) || 0;
+    }
 
-const totalMeal = breakfast + lunch + dinner;
+  }
 
-const totalCost =
-(breakfast * BREAKFAST_RATE) +
-(lunch * LUNCH_RATE) +
-(dinner * DINNER_RATE);
 
-const start = new Date(fromDate + "T00:00:00");
-const end = new Date(toDate + "T00:00:00");
+  const breakfast =
+    parseInt(document.getElementById("breakfast").value) || 0;
 
-for(
-let d = new Date(start);
-d <= end;
-d.setDate(d.getDate() + 1)
-){
+  const lunch =
+    parseInt(document.getElementById("lunch").value) || 0;
 
-const date = d.getFullYear() + "-" +
-String(d.getMonth() + 1).padStart(2,"0") + "-" +
-String(d.getDate()).padStart(2,"0");
+  const dinner =
+    parseInt(document.getElementById("dinner").value) || 0;
 
-const mealRef = db.collection("meals")
-.doc(currentUser + "_" + date);
 
-const existingMeal = await mealRef.get();
+  const totalMeal =
+    breakfast + lunch + dinner;
 
-let createdTime = Date.now();
 
-if(existingMeal.exists){
+  const totalCost =
+    (breakfast * BREAKFAST_RATE) +
+    (lunch * LUNCH_RATE) +
+    (dinner * DINNER_RATE);
 
-const oldData = existingMeal.data();
 
-if(
-currentUser !== "Admin" &&
-oldData.createdAt
-){
+  const start =
+    new Date(fromDate + "T00:00:00");
 
-const hoursPassed =
-(Date.now() - Number(oldData.createdAt))
-/ (1000 * 60 * 60);
+  const end =
+    new Date(toDate + "T00:00:00");
 
-if(hoursPassed >= 9){
 
-alert(
-date + " সময়সীমা শেষ❗ এখন আর মিল পরিবর্তন করা যাবে না!"
-);
+  // একাধিক দিনের জন্য
+  for(
+    let d = new Date(start);
+    d <= end;
+    d.setDate(d.getDate() + 1)
+  ){
 
-return;
+    const date =
+      d.getFullYear() + "-" +
+      String(d.getMonth() + 1).padStart(2, "0") + "-" +
+      String(d.getDate()).padStart(2, "0");
 
-}
 
-}
+    // ==============================
+    // MEMBER MEAL TIME LIMIT
+    // ==============================
 
-if(oldData.createdAt){
-createdTime = Number(oldData.createdAt);
-}
+    if(currentUser !== "Admin"){
 
-}
+      // আগের দিনের meal একদম পরিবর্তন করা যাবে না
+      if(date < todayStr){
 
-await mealRef.set({
-user: currentUser,
-date,
-breakfast,
-lunch,
-dinner,
-totalMeal,
-totalCost,
-createdAt: createdTime,
-updatedAt: Date.now()
-});
+        alert(
+          date +
+          " তারিখের meal পরিবর্তনের সময় শেষ!"
+        );
 
-}
+        return;
 
-alert("Meal Saved!");
+      }
 
-loadFinancialSummary();
+
+      // আজকের meal হলে সকাল ৯টার পর আর পরিবর্তন করা যাবে না
+      if(date === todayStr){
+
+        const now = new Date();
+
+        const lockTime =
+          new Date(date + "T09:00:00");
+
+
+        if(now >= lockTime){
+
+          alert(
+            date +
+            " তারিখের meal পরিবর্তনের সময় সকাল ৯টায় শেষ হয়েছে!"
+          );
+
+          return;
+
+        }
+
+      }
+
+    }
+
+
+    const mealRef =
+      db.collection("meals")
+        .doc(currentUser + "_" + date);
+
+
+    const existingMeal =
+      await mealRef.get();
+
+
+    // আগে থেকে meal থাকলে তার createdAt রেখে দেওয়া হবে
+    let createdTime = Date.now();
+
+
+    if(existingMeal.exists){
+
+      const oldData =
+        existingMeal.data();
+
+
+      if(oldData.createdAt){
+
+        createdTime =
+          Number(oldData.createdAt);
+
+      }
+
+    }
+
+
+    await mealRef.set({
+
+      user: currentUser,
+
+      date: date,
+
+      breakfast: breakfast,
+
+      lunch: lunch,
+
+      dinner: dinner,
+
+      totalMeal: totalMeal,
+
+      totalCost: totalCost,
+
+      createdAt: createdTime,
+
+      updatedAt: Date.now()
+
+    });
+
+  }
+
+
+  alert("Meal Saved!");
+
+  loadFinancialSummary();
 
 }
 
