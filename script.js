@@ -282,7 +282,7 @@ async function saveMeal(){
         const now = new Date();
 
         const lockTime =
-          new Date(date + "T09:00:00");
+          new Date(date + "T12:00:00");
 
 
         if(now >= lockTime){
