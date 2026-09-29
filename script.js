@@ -1347,13 +1347,59 @@ const data=doc.data();
 box.innerHTML += `
 
 <div class="mama-history-item">
-📅 তারিখ: ${data.date || "N/A"}<br>
-💰 টাকা: ৳ ${data.amount || 0}<br><br>
+
+<div style="
+display:flex;
+justify-content:space-between;
+align-items:center;
+gap:8px;
+">
+
+<div>
+📅 তারিখ: ${data.date || "N/A"}
+</div>
 
 ${currentUser === "Admin" ? `
-<button onclick="editAliVaiPayment('${doc.id}')">✏️ এডিট</button>
-<button onclick="deleteAliVaiPayment('${doc.id}')">🗑 মুছুন</button>
+<div style="
+display:flex;
+gap:5px;
+flex-shrink:0;
+">
+
+<button
+onclick="editAliVaiPayment('${doc.id}')"
+style="
+width:auto;
+padding:5px 9px;
+font-size:12px;
+border:none;
+border-radius:6px;
+"
+>
+✏️
+</button>
+
+<button
+onclick="deleteAliVaiPayment('${doc.id}')"
+style="
+width:auto;
+padding:5px 9px;
+font-size:12px;
+border:none;
+border-radius:6px;
+"
+>
+🗑️
+</button>
+
+</div>
 ` : ""}
+
+</div>
+
+<div style="margin-top:8px;">
+💰 টাকা: ৳ ${data.amount || 0}
+</div>
 
 </div>
 
