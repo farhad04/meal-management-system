@@ -1262,25 +1262,76 @@ document.getElementById("cancelClearBtn").style.display="none";
 
 async function clearAllMonthlyData(){
 
-const collections=["meals","payments","mamaPayments"];
+  const collections = ["meals","payments","mamaPayments"];
 
-for(const col of collections){
+  // বর্তমান মাস নির্ধারণ
+  const now = new Date();
 
-const snap=await db.collection(col).get();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2,"0");
 
-for(const docItem of snap.docs){
+  const monthKey = year + "-" + month;
 
-await db.collection("backup_"+col).doc(docItem.id).set(docItem.data());
+  // Backup month information
+  await db.collection("monthlyArchives")
+    .doc(monthKey)
+    .set({
+      month: monthKey,
+      createdAt: new Date().toISOString()
+    });
 
-await db.collection(col).doc(docItem.id).delete();
+  for(const col of collections){
 
-}
+    const snap = await db.collection(col).get();
 
-}
+    for(const docItem of snap.docs){
 
-alert("সব হিসাব ক্লিয়ার হয়েছে এবং Backup Save হয়েছে");
+      const data = docItem.data();
 
-location.reload();
+      // শুধু বর্তমান মাসের data archive হবে
+      if(
+        col === "meals" &&
+        data.date &&
+        data.date.startsWith(monthKey)
+      ){
+
+        await db.collection("monthlyArchives")
+          .doc(monthKey)
+          .collection(col)
+          .doc(docItem.id)
+          .set(data);
+
+        await db.collection(col)
+          .doc(docItem.id)
+          .delete();
+      }
+
+      else if(
+        col !== "meals" &&
+        data.date &&
+        data.date.startsWith(monthKey)
+      ){
+
+        await db.collection("monthlyArchives")
+          .doc(monthKey)
+          .collection(col)
+          .doc(docItem.id)
+          .set(data);
+
+        await db.collection(col)
+          .doc(docItem.id)
+          .delete();
+      }
+
+    }
+
+  }
+
+  alert(
+    "এই মাসের হিসাব Archive হয়েছে এবং বর্তমান হিসাব ক্লিয়ার হয়েছে।"
+  );
+
+  location.reload();
 
 }
 
@@ -1941,3 +1992,681 @@ console.log("FCM Token:", token);
 }
 
 enableNotification();
+async function loadMonthlyArchives(){
+
+  const box =
+    document.getElementById("monthlyArchiveList");
+
+  if(!box){
+    return;
+  }
+
+  box.innerHTML = "লোড হচ্ছে...";
+
+  const snap =
+    await db.collection("monthlyArchives")
+      .orderBy("month","desc")
+      .get();
+
+  if(snap.empty){
+
+    box.innerHTML =
+      "<div>কোনো পুরোনো মাসের হিসাব নেই</div>";
+
+    return;
+  }
+
+  box.innerHTML = "";
+
+  snap.forEach((doc)=>{
+
+    const data = doc.data();
+
+    const month = data.month;
+
+    box.innerHTML += `
+
+      <div
+        style="
+          display:flex;
+          justify-content:space-between;
+          align-items:center;
+          padding:10px;
+          margin-bottom:8px;
+          background:#f5f5f5;
+          border-radius:8px;
+        "
+      >
+
+        <strong>
+          📅 ${month}
+        </strong>
+
+        <button
+          onclick="openArchivedMonth('${month}')"
+          style="
+            width:auto;
+            padding:6px 10px;
+            font-size:12px;
+          "
+        >
+          📊 Full Screen
+        </button>
+
+      </div>
+
+    `;
+
+  });
+
+}
+async function openArchivedMonth(monthKey){
+
+  const modal =
+    document.getElementById("mealFullscreenModal");
+
+  const content =
+    document.getElementById("mealFullscreenContent");
+
+  if(!modal || !content){
+    return;
+  }
+
+  content.innerHTML =
+    "<div style='padding:20px;text-align:center;'>লোড হচ্ছে...</div>";
+
+  modal.style.display = "block";
+
+
+  // =====================================
+  // ARCHIVED MEALS LOAD
+  // =====================================
+
+  const mealSnap =
+    await db.collection("monthlyArchives")
+      .doc(monthKey)
+      .collection("meals")
+      .get();
+
+
+  const meals = {};
+
+  const users = new Set();
+
+
+  mealSnap.forEach((doc)=>{
+
+    const item = doc.data();
+
+    if(!item.date || !item.user){
+      return;
+    }
+
+
+    const day =
+      parseInt(item.date.split("-")[2]);
+
+
+    if(!meals[day]){
+      meals[day] = {};
+    }
+
+
+    meals[day][item.user] = {
+
+      b: Number(item.breakfast || 0),
+
+      l: Number(item.lunch || 0),
+
+      d: Number(item.dinner || 0)
+
+    };
+
+
+    users.add(item.user);
+
+  });
+
+
+  // =====================================
+  // ARCHIVED PAYMENT LOAD
+  // =====================================
+
+  const paymentSnap =
+    await db.collection("monthlyArchives")
+      .doc(monthKey)
+      .collection("payments")
+      .get();
+
+
+  const deposits = {};
+
+
+  paymentSnap.forEach((doc)=>{
+
+    const item = doc.data();
+
+
+    if(
+      item.status === "accepted" &&
+      item.user
+    ){
+
+      if(!deposits[item.user]){
+        deposits[item.user] = 0;
+      }
+
+
+      deposits[item.user] +=
+        Number(item.amount || 0);
+
+
+      users.add(item.user);
+
+    }
+
+  });
+
+
+  // =====================================
+  // USER LIST
+  // =====================================
+
+  const userList =
+    Array.from(users).sort();
+
+
+  // =====================================
+  // MONTH DAYS
+  // =====================================
+
+  const year =
+    parseInt(monthKey.split("-")[0]);
+
+
+  const month =
+    parseInt(monthKey.split("-")[1]);
+
+
+  const daysInMonth =
+    new Date(year, month, 0).getDate();
+
+
+  // =====================================
+  // HTML START
+  // =====================================
+
+  let html = `
+
+  <div
+    style="
+      overflow:auto;
+      width:100%;
+      height:90vh;
+    "
+  >
+
+  <h2 style="
+    text-align:center;
+    margin:10px;
+  ">
+    📊 ${monthKey} Meal Sheet
+  </h2>
+
+
+  <table
+    border="1"
+    style="
+      border-collapse:collapse;
+      width:max-content;
+      min-width:100%;
+      text-align:center;
+    "
+  >
+
+  <thead>
+
+  <tr>
+
+    <th rowspan="2">
+      তারিখ
+    </th>
+
+  `;
+
+
+  // Member names
+  userList.forEach((user)=>{
+
+    html += `
+
+      <th colspan="3">
+        ${user}
+      </th>
+
+    `;
+
+  });
+
+
+  html += `
+
+    <th colspan="3">
+      মোট
+    </th>
+
+  </tr>
+
+
+  <tr>
+
+  `;
+
+
+  // Meal headings
+  userList.forEach(()=>{
+
+    html += `
+
+      <th>🌅</th>
+      <th>☀️</th>
+      <th>🌙</th>
+
+    `;
+
+  });
+
+
+  html += `
+
+    <th>🌅</th>
+    <th>☀️</th>
+    <th>🌙</th>
+
+  </tr>
+
+  </thead>
+
+  <tbody>
+
+  `;
+
+
+  // =====================================
+  // DAILY ROWS
+  // =====================================
+
+  for(
+    let d = 1;
+    d <= daysInMonth;
+    d++
+  ){
+
+    const day =
+      String(d).padStart(2,"0");
+
+
+    html += `
+
+      <tr>
+
+        <td>
+          <b>${day}</b>
+        </td>
+
+    `;
+
+
+    let dayB = 0;
+    let dayL = 0;
+    let dayD = 0;
+
+
+    userList.forEach((user)=>{
+
+      const meal =
+        meals[d]?.[user];
+
+
+      if(meal){
+
+        dayB += meal.b;
+        dayL += meal.l;
+        dayD += meal.d;
+
+      }
+
+
+      html += `
+
+        <td>
+          ${meal ? meal.b : ""}
+        </td>
+
+        <td>
+          ${meal ? meal.l : ""}
+        </td>
+
+        <td>
+          ${meal ? meal.d : ""}
+        </td>
+
+      `;
+
+    });
+
+
+    // Daily total
+    html += `
+
+      <td>
+        <b>${dayB}</b>
+      </td>
+
+      <td>
+        <b>${dayL}</b>
+      </td>
+
+      <td>
+        <b>${dayD}</b>
+      </td>
+
+      </tr>
+
+    `;
+
+  }
+
+
+  // =====================================
+  // TOTAL MEAL ROW
+  // =====================================
+
+  html += `
+
+    <tr
+      style="
+        background:#374151;
+        color:white;
+        font-weight:bold;
+      "
+    >
+
+      <td>T</td>
+
+  `;
+
+
+  let grandB = 0;
+  let grandL = 0;
+  let grandD = 0;
+
+
+  userList.forEach((user)=>{
+
+    let totalB = 0;
+    let totalL = 0;
+    let totalD = 0;
+
+
+    for(
+      let d = 1;
+      d <= daysInMonth;
+      d++
+    ){
+
+      const meal =
+        meals[d]?.[user];
+
+
+      if(meal){
+
+        totalB += meal.b;
+        totalL += meal.l;
+        totalD += meal.d;
+
+      }
+
+    }
+
+
+    grandB += totalB;
+    grandL += totalL;
+    grandD += totalD;
+
+
+    html += `
+
+      <td>${totalB}</td>
+      <td>${totalL}</td>
+      <td>${totalD}</td>
+
+    `;
+
+  });
+
+
+  html += `
+
+      <td><b>${grandB}</b></td>
+      <td><b>${grandL}</b></td>
+      <td><b>${grandD}</b></td>
+
+    </tr>
+
+  `;
+
+
+  // =====================================
+  // MEAL COST ROW
+  // =====================================
+
+  html += `
+
+    <tr
+      style="
+        background:#374151;
+        color:#00ff88;
+        font-weight:bold;
+      "
+    >
+
+      <td>৳</td>
+
+  `;
+
+
+  let grandCost = 0;
+
+
+  userList.forEach((user)=>{
+
+    let totalCost = 0;
+
+
+    for(
+      let d = 1;
+      d <= daysInMonth;
+      d++
+    ){
+
+      const meal =
+        meals[d]?.[user];
+
+
+      if(meal){
+
+        totalCost +=
+          (meal.b * 20) +
+          (meal.l * 50) +
+          (meal.d * 50);
+
+      }
+
+    }
+
+
+    grandCost += totalCost;
+
+
+    html += `
+
+      <td colspan="3">
+        ৳ ${totalCost}
+      </td>
+
+    `;
+
+  });
+
+
+  html += `
+
+      <td colspan="3">
+        <b>৳ ${grandCost}</b>
+      </td>
+
+    </tr>
+
+  `;
+
+
+  // =====================================
+  // DEPOSIT ROW
+  // =====================================
+
+  html += `
+
+    <tr
+      style="
+        background:#1f2937;
+        color:#00e676;
+        font-weight:bold;
+      "
+    >
+
+      <td>জমা</td>
+
+  `;
+
+
+  let grandDeposit = 0;
+
+
+  userList.forEach((user)=>{
+
+    const deposit =
+      deposits[user] || 0;
+
+
+    grandDeposit += deposit;
+
+
+    html += `
+
+      <td colspan="3">
+        ৳ ${deposit}
+      </td>
+
+    `;
+
+  });
+
+
+  html += `
+
+      <td colspan="3">
+        ৳ ${grandDeposit}
+      </td>
+
+    </tr>
+
+  `;
+
+
+  // =====================================
+  // BALANCE ROW
+  // =====================================
+
+  html += `
+
+    <tr
+      style="
+        background:#0f172a;
+        color:#38bdf8;
+        font-weight:bold;
+      "
+    >
+
+      <td>ব্যালেন্স</td>
+
+  `;
+
+
+  userList.forEach((user)=>{
+
+    let totalCost = 0;
+
+
+    for(
+      let d = 1;
+      d <= daysInMonth;
+      d++
+    ){
+
+      const meal =
+        meals[d]?.[user];
+
+
+      if(meal){
+
+        totalCost +=
+          (meal.b * 20) +
+          (meal.l * 50) +
+          (meal.d * 50);
+
+      }
+
+    }
+
+
+    const deposit =
+      deposits[user] || 0;
+
+
+    const balance =
+      deposit - totalCost;
+
+
+    html += `
+
+      <td colspan="3">
+        ৳ ${balance}
+      </td>
+
+    `;
+
+  });
+
+
+  html += `
+
+      <td colspan="3">
+        -
+      </td>
+
+    </tr>
+
+
+  </tbody>
+
+  </table>
+
+  </div>
+
+  `;
+
+
+  content.innerHTML = html;
+
+}
