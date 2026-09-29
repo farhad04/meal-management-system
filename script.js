@@ -1335,33 +1335,7 @@ async function clearAllMonthlyData(){
 
 }
 
-async function restoreBackup(){
 
-const ask = confirm("Backup Restore করবেন?");
-
-if(!ask){
-return;
-}
-
-const collections=["meals","payments","mamaPayments"];
-
-for(const col of collections){
-
-const snap=await db.collection("backup_"+col).get();
-
-for(const docItem of snap.docs){
-
-await db.collection(col).doc(docItem.id).set(docItem.data());
-
-}
-
-}
-
-alert("Backup Restore Complete!");
-
-location.reload();
-
-}
 
 
 setTimeout(()=>{
