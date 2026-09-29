@@ -2060,6 +2060,7 @@ async function loadMonthlyArchives(){
   });
 
 }
+
 async function openArchivedMonth(monthKey){
 
   const modal =
@@ -2077,10 +2078,9 @@ async function openArchivedMonth(monthKey){
 
   modal.style.display = "block";
 
-
-  // =====================================
-  // ARCHIVED MEALS LOAD
-  // =====================================
+  /* =========================
+     ARCHIVED MEALS
+  ========================= */
 
   const mealSnap =
     await db.collection("monthlyArchives")
@@ -2088,49 +2088,36 @@ async function openArchivedMonth(monthKey){
       .collection("meals")
       .get();
 
-
   const meals = {};
-
   const users = new Set();
 
-
   mealSnap.forEach((doc)=>{
-
     const item = doc.data();
 
     if(!item.date || !item.user){
       return;
     }
 
-
     const day =
       parseInt(item.date.split("-")[2]);
-
 
     if(!meals[day]){
       meals[day] = {};
     }
 
-
     meals[day][item.user] = {
-
       b: Number(item.breakfast || 0),
-
       l: Number(item.lunch || 0),
-
       d: Number(item.dinner || 0)
-
     };
 
-
     users.add(item.user);
-
   });
 
 
-  // =====================================
-  // ARCHIVED PAYMENT LOAD
-  // =====================================
+  /* =========================
+     ARCHIVED MEMBER PAYMENTS
+  ========================= */
 
   const paymentSnap =
     await db.collection("monthlyArchives")
@@ -2138,184 +2125,159 @@ async function openArchivedMonth(monthKey){
       .collection("payments")
       .get();
 
-
   const deposits = {};
 
-
   paymentSnap.forEach((doc)=>{
-
     const item = doc.data();
 
-
-    if(
-      item.status === "accepted" &&
-      item.user
-    ){
+    if(item.status === "accepted" && item.user){
 
       if(!deposits[item.user]){
         deposits[item.user] = 0;
       }
 
-
       deposits[item.user] +=
         Number(item.amount || 0);
 
-
       users.add(item.user);
-
     }
-
   });
 
 
-  // =====================================
-  // USER LIST
-  // =====================================
+  /* =========================
+     ARCHIVED ALI VAI PAYMENTS
+  ========================= */
+
+  const mamaSnap =
+    await db.collection("monthlyArchives")
+      .doc(monthKey)
+      .collection("mamaPayments")
+      .get();
+
+  const mamaPayments = [];
+
+  let totalMamaPayment = 0;
+
+  mamaSnap.forEach((doc)=>{
+    const item = doc.data();
+
+    const amount =
+      Number(item.amount || 0);
+
+    totalMamaPayment += amount;
+
+    mamaPayments.push({
+      date: item.date || "N/A",
+      amount: amount
+    });
+  });
+
+  /* তারিখ অনুযায়ী সাজানো */
+  mamaPayments.sort((a,b)=>{
+    return String(a.date).localeCompare(
+      String(b.date)
+    );
+  });
+
+
+  /* =========================
+     USERS
+  ========================= */
 
   const userList =
     Array.from(users).sort();
 
 
-  // =====================================
-  // MONTH DAYS
-  // =====================================
+  /* =========================
+     MONTH DAYS
+  ========================= */
 
   const year =
     parseInt(monthKey.split("-")[0]);
 
-
   const month =
     parseInt(monthKey.split("-")[1]);
-
 
   const daysInMonth =
     new Date(year, month, 0).getDate();
 
 
-  // =====================================
-  // HTML START
-  // =====================================
+  /* =========================
+     TABLE START
+  ========================= */
 
   let html = `
 
-  <div
-    style="
-      overflow:auto;
-      width:100%;
-      height:90vh;
-    "
-  >
+  <div style="overflow:auto;width:100%;height:90vh">
 
-  <h2 style="
-    text-align:center;
-    margin:10px;
-  ">
+  <h2 style="text-align:center;margin:10px;">
     📊 ${monthKey} Meal Sheet
   </h2>
 
-
-  <table
-    border="1"
+  <table border="1"
     style="
       border-collapse:collapse;
       width:max-content;
       min-width:100%;
       text-align:center;
-    "
-  >
+    ">
 
   <thead>
 
   <tr>
-
-    <th rowspan="2">
-      তারিখ
-    </th>
-
+    <th rowspan="2">তারিখ</th>
   `;
 
 
-  // Member names
   userList.forEach((user)=>{
-
     html += `
-
-      <th colspan="3">
-        ${user}
-      </th>
-
+      <th colspan="3">${user}</th>
     `;
-
   });
 
 
   html += `
-
-    <th colspan="3">
-      মোট
-    </th>
-
+    <th colspan="3">মোট</th>
   </tr>
 
-
   <tr>
-
   `;
 
 
-  // Meal headings
   userList.forEach(()=>{
-
     html += `
-
       <th>🌅</th>
       <th>☀️</th>
       <th>🌙</th>
-
     `;
-
   });
 
 
   html += `
-
     <th>🌅</th>
     <th>☀️</th>
     <th>🌙</th>
-
   </tr>
 
   </thead>
 
   <tbody>
-
   `;
 
 
-  // =====================================
-  // DAILY ROWS
-  // =====================================
+  /* =========================
+     DAILY MEALS
+  ========================= */
 
-  for(
-    let d = 1;
-    d <= daysInMonth;
-    d++
-  ){
+  for(let d=1; d<=daysInMonth; d++){
 
     const day =
       String(d).padStart(2,"0");
 
-
     html += `
-
       <tr>
-
-        <td>
-          <b>${day}</b>
-        </td>
-
+        <td><b>${day}</b></td>
     `;
-
 
     let dayB = 0;
     let dayL = 0;
@@ -2327,7 +2289,6 @@ async function openArchivedMonth(monthKey){
       const meal =
         meals[d]?.[user];
 
-
       if(meal){
 
         dayB += meal.b;
@@ -2338,62 +2299,35 @@ async function openArchivedMonth(monthKey){
 
 
       html += `
-
-        <td>
-          ${meal ? meal.b : ""}
-        </td>
-
-        <td>
-          ${meal ? meal.l : ""}
-        </td>
-
-        <td>
-          ${meal ? meal.d : ""}
-        </td>
-
+        <td>${meal ? meal.b : ""}</td>
+        <td>${meal ? meal.l : ""}</td>
+        <td>${meal ? meal.d : ""}</td>
       `;
 
     });
 
 
-    // Daily total
     html += `
-
-      <td>
-        <b>${dayB}</b>
-      </td>
-
-      <td>
-        <b>${dayL}</b>
-      </td>
-
-      <td>
-        <b>${dayD}</b>
-      </td>
-
+        <td><b>${dayB}</b></td>
+        <td><b>${dayL}</b></td>
+        <td><b>${dayD}</b></td>
       </tr>
-
     `;
-
   }
 
 
-  // =====================================
-  // TOTAL MEAL ROW
-  // =====================================
+  /* =========================
+     TOTAL MEALS
+  ========================= */
 
   html += `
-
-    <tr
-      style="
-        background:#374151;
-        color:white;
-        font-weight:bold;
-      "
-    >
+    <tr style="
+      background:#374151;
+      color:white;
+      font-weight:bold;
+    ">
 
       <td>T</td>
-
   `;
 
 
@@ -2409,15 +2343,10 @@ async function openArchivedMonth(monthKey){
     let totalD = 0;
 
 
-    for(
-      let d = 1;
-      d <= daysInMonth;
-      d++
-    ){
+    for(let d=1; d<=daysInMonth; d++){
 
       const meal =
         meals[d]?.[user];
-
 
       if(meal){
 
@@ -2426,7 +2355,6 @@ async function openArchivedMonth(monthKey){
         totalD += meal.d;
 
       }
-
     }
 
 
@@ -2436,43 +2364,35 @@ async function openArchivedMonth(monthKey){
 
 
     html += `
-
       <td>${totalB}</td>
       <td>${totalL}</td>
       <td>${totalD}</td>
-
     `;
 
   });
 
 
   html += `
-
       <td><b>${grandB}</b></td>
       <td><b>${grandL}</b></td>
       <td><b>${grandD}</b></td>
 
     </tr>
-
   `;
 
 
-  // =====================================
-  // MEAL COST ROW
-  // =====================================
+  /* =========================
+     MEAL COST
+  ========================= */
 
   html += `
-
-    <tr
-      style="
-        background:#374151;
-        color:#00ff88;
-        font-weight:bold;
-      "
-    >
+    <tr style="
+      background:#374151;
+      color:#00ff88;
+      font-weight:bold;
+    ">
 
       <td>৳</td>
-
   `;
 
 
@@ -2484,15 +2404,10 @@ async function openArchivedMonth(monthKey){
     let totalCost = 0;
 
 
-    for(
-      let d = 1;
-      d <= daysInMonth;
-      d++
-    ){
+    for(let d=1; d<=daysInMonth; d++){
 
       const meal =
         meals[d]?.[user];
-
 
       if(meal){
 
@@ -2502,7 +2417,6 @@ async function openArchivedMonth(monthKey){
           (meal.d * 50);
 
       }
-
     }
 
 
@@ -2510,43 +2424,35 @@ async function openArchivedMonth(monthKey){
 
 
     html += `
-
       <td colspan="3">
         ৳ ${totalCost}
       </td>
-
     `;
 
   });
 
 
   html += `
-
       <td colspan="3">
         <b>৳ ${grandCost}</b>
       </td>
 
     </tr>
-
   `;
 
 
-  // =====================================
-  // DEPOSIT ROW
-  // =====================================
+  /* =========================
+     DEPOSIT
+  ========================= */
 
   html += `
-
-    <tr
-      style="
-        background:#1f2937;
-        color:#00e676;
-        font-weight:bold;
-      "
-    >
+    <tr style="
+      background:#1f2937;
+      color:#00e676;
+      font-weight:bold;
+    ">
 
       <td>জমা</td>
-
   `;
 
 
@@ -2558,48 +2464,39 @@ async function openArchivedMonth(monthKey){
     const deposit =
       deposits[user] || 0;
 
-
     grandDeposit += deposit;
 
 
     html += `
-
       <td colspan="3">
         ৳ ${deposit}
       </td>
-
     `;
 
   });
 
 
   html += `
-
       <td colspan="3">
         ৳ ${grandDeposit}
       </td>
 
     </tr>
-
   `;
 
 
-  // =====================================
-  // BALANCE ROW
-  // =====================================
+  /* =========================
+     BALANCE
+  ========================= */
 
   html += `
-
-    <tr
-      style="
-        background:#0f172a;
-        color:#38bdf8;
-        font-weight:bold;
-      "
-    >
+    <tr style="
+      background:#0f172a;
+      color:#38bdf8;
+      font-weight:bold;
+    ">
 
       <td>ব্যালেন্স</td>
-
   `;
 
 
@@ -2608,15 +2505,10 @@ async function openArchivedMonth(monthKey){
     let totalCost = 0;
 
 
-    for(
-      let d = 1;
-      d <= daysInMonth;
-      d++
-    ){
+    for(let d=1; d<=daysInMonth; d++){
 
       const meal =
         meals[d]?.[user];
-
 
       if(meal){
 
@@ -2626,41 +2518,125 @@ async function openArchivedMonth(monthKey){
           (meal.d * 50);
 
       }
-
     }
 
 
     const deposit =
       deposits[user] || 0;
 
-
     const balance =
       deposit - totalCost;
 
 
     html += `
-
       <td colspan="3">
         ৳ ${balance}
       </td>
-
     `;
 
   });
 
 
   html += `
-
-      <td colspan="3">
-        -
-      </td>
+      <td colspan="3">-</td>
 
     </tr>
-
 
   </tbody>
 
   </table>
+
+
+  <!-- =========================
+       ALI VAI PAYMENT HISTORY
+  ========================= -->
+
+  <div style="
+    margin:20px 5px;
+    padding:15px;
+    background:#f8fafc;
+    border-radius:12px;
+    border:1px solid #ddd;
+  ">
+
+    <h3 style="
+      margin-top:0;
+      text-align:center;
+    ">
+      🤝 আলী ভাইকে দেওয়া টাকা
+    </h3>
+  `;
+
+
+  if(mamaPayments.length === 0){
+
+    html += `
+      <div style="
+        text-align:center;
+        padding:10px;
+        color:#777;
+      ">
+        এই মাসে কোনো টাকা দেওয়া হয়নি।
+      </div>
+    `;
+
+  }else{
+
+    mamaPayments.forEach((item)=>{
+
+      html += `
+        <div style="
+          display:flex;
+          justify-content:space-between;
+          align-items:center;
+          padding:10px;
+          margin-bottom:6px;
+          background:white;
+          border-radius:8px;
+          border:1px solid #e5e7eb;
+        ">
+
+          <span>
+            📅 ${item.date}
+          </span>
+
+          <strong>
+            ৳ ${item.amount}
+          </strong>
+
+        </div>
+      `;
+
+    });
+
+
+    html += `
+      <div style="
+        display:flex;
+        justify-content:space-between;
+        margin-top:10px;
+        padding:12px;
+        background:#1f2937;
+        color:#00e676;
+        border-radius:8px;
+        font-weight:bold;
+      ">
+
+        <span>🤝 মোট আলী ভাইকে দেওয়া</span>
+
+        <span>
+          ৳ ${totalMamaPayment}
+        </span>
+
+      </div>
+    `;
+
+  }
+
+
+  html += `
+
+  </div>
 
   </div>
 
@@ -2668,5 +2644,4 @@ async function openArchivedMonth(monthKey){
 
 
   content.innerHTML = html;
-
 }
