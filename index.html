@@ -24,15 +24,9 @@
         
 
         <select id="username">
-            <option value="">Select Account</option>
-            <option value="Admin">Admin</option>
-            <option value="Farhad">Farhad</option>
-            <option value="Rakim">Rakim</option>
-            <option value="HadiandBatman">HadiandBatman</option>
-            <option value="Rizvi">Rizvi</option>
-            <option value="Rabby">Rabby</option>
-            <option value="Jahid">Jahid</option>
-        </select>
+    <option value="">Select Account</option>
+    <option value="Admin">Admin</option>
+</select>
 
         <input type="password" id="password" placeholder="Password">
 
@@ -159,12 +153,6 @@
             <input type="date" id="paymentDate">
 
             <select id="paymentMember">
-<option value="Farhad">Farhad</option>
-<option value="Rakim">Rakim</option>
-<option value="HadiandBatman">Hadi&Batman</option>
-<option value="Rizvi">Rizvi</option>
-<option value="Rabby">Rabby</option>
-<option value="Jahid">Jahid</option>
 </select>
 
 <input type="number" id="paymentAmount" placeholder="টাকার পরিমাণ">
@@ -270,6 +258,33 @@
 <h3>📢 নোটিশ লিখুন</h3>
 <textarea id="noticeInput" placeholder="নোটিশ লিখুন"></textarea>
 <button class="saveNoticeBtn" onclick="saveNotice()">নোটিশ সেভ</button>
+    <h3>👥 Member Management</h3>
+
+<div style="margin-bottom:15px;">
+
+<input
+type="text"
+id="newMemberName"
+placeholder="নতুন Member নাম"
+>
+
+<input
+type="text"
+id="newMemberPassword"
+placeholder="Password"
+>
+
+<button onclick="addMember()">
+➕ Member Add
+</button>
+
+</div>
+
+<div
+id="memberManagementList"
+style="margin-top:15px;"
+>
+</div>
 
 <h3>🗑 মাস ক্লিয়ার</h3>
 <button class="dangerClearBtn" onclick="startClear()">মাসের হিসাব ক্লিয়ার</button>
