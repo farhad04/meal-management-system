@@ -1335,48 +1335,7 @@ async function clearAllMonthlyData(){
 
 }
 
-//async function restoreBackup(){
 
-//const ask = confirm("Backup Restore করবেন?");
-
-//if(!ask){
-//return;
-//}
-
-const collections=["meals","payments","mamaPayments"];
-
-for(const col of collections){
-
-const snap=await db.collection("backup_"+col).get();
-
-for(const docItem of snap.docs){
-
-await db.collection(col).doc(docItem.id).set(docItem.data());
-
-}
-
-}
-
-alert("Backup Restore Complete!");
-
-location.reload();
-
-}
-
-
-setTimeout(()=>{
-
-if(typeof currentUser !== "undefined" && currentUser==="Admin"){
-
-const panel=document.getElementById("adminPanelTools");
-
-if(panel){
-panel.style.display="block";
-}
-
-}
-
-},1000);
 
 
 async function loadMamaPaymentHistory(){
