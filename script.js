@@ -1335,13 +1335,13 @@ async function clearAllMonthlyData(){
 
 }
 
-async function restoreBackup(){
+//async function restoreBackup(){
 
-const ask = confirm("Backup Restore করবেন?");
+//const ask = confirm("Backup Restore করবেন?");
 
-if(!ask){
-return;
-}
+//if(!ask){
+//return;
+//}
 
 const collections=["meals","payments","mamaPayments"];
 
