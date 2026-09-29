@@ -411,6 +411,24 @@ loadFinancialSummary();
 }
 
 };
+function toggleMemberManagement(){
+
+  const box =
+    document.getElementById("memberManagementBox");
+
+  if(box.style.display === "none"){
+
+    box.style.display = "block";
+
+    loadMemberManagementList();
+
+  }else{
+
+    box.style.display = "none";
+
+  }
+
+}
 
 async function login(){
 
