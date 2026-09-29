@@ -260,30 +260,38 @@
 <button class="saveNoticeBtn" onclick="saveNotice()">নোটিশ সেভ</button>
     <h3>👥 Member Management</h3>
 
-<div style="margin-bottom:15px;">
-
-<input
-type="text"
-id="newMemberName"
-placeholder="নতুন Member নাম"
+<button
+  onclick="toggleMemberManagement()"
+  class="saveNoticeBtn"
 >
-
-<input
-type="text"
-id="newMemberPassword"
-placeholder="Password"
->
-
-<button onclick="addMember()">
-➕ Member Add
 </button>
 
-</div>
-
 <div
-id="memberManagementList"
-style="margin-top:15px;"
+  id="memberManagementBox"
+  style="display:none; margin-top:15px;"
 >
+
+  <input
+    type="text"
+    id="newMemberName"
+    placeholder="নতুন Member নাম"
+  >
+
+  <input
+    type="text"
+    id="newMemberPassword"
+    placeholder="Password"
+  >
+
+  <button onclick="addMember()">
+    ➕ Member Add
+  </button>
+
+  <div
+    id="memberManagementList"
+    style="margin-top:15px;"
+  ></div>
+
 </div>
 
 <h3>🗑 মাস ক্লিয়ার</h3>
