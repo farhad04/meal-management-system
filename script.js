@@ -1,13 +1,326 @@
 
 const users = {
-Admin:"admin123",
-Farhad:"1234",
-Rakim:"1234",
-HadiandBatman:"1234",
-Rizvi:"1234",
-Rabby:"1234",
-Jahid:"1234"
+  Admin:"admin123"
 };
+// ==============================
+// MEMBER MANAGEMENT SYSTEM
+// ==============================
+
+const defaultMembers = {
+  Farhad:"1234",
+  Rakim:"1234",
+  HadiandBatman:"1234",
+  Rizvi:"1234",
+  Rabby:"1234",
+  Jahid:"1234"
+};
+
+
+// প্রথমবার Members collection তৈরি
+async function initializeMembers(){
+
+  const snap =
+    await db.collection("members").limit(1).get();
+
+  // যদি আগে থেকেই member থাকে তাহলে কিছু করবে না
+  if(!snap.empty){
+    return;
+  }
+
+
+  for(const name in defaultMembers){
+
+    await db.collection("members")
+      .doc(name)
+      .set({
+        name:name,
+        password:defaultMembers[name],
+        createdAt:Date.now()
+      });
+
+  }
+
+}
+
+
+// সব Member load
+async function loadMembers(){
+
+  await initializeMembers();
+
+
+  const snap =
+    await db.collection("members").get();
+
+
+  const loginSelect =
+    document.getElementById("username");
+
+  const paymentSelect =
+    document.getElementById("paymentMember");
+
+
+  // Login list
+  if(loginSelect){
+
+    loginSelect.innerHTML =
+      `<option value="">Select Account</option>
+       <option value="Admin">Admin</option>`;
+
+
+    snap.forEach((doc)=>{
+
+      const data = doc.data();
+
+      loginSelect.innerHTML +=
+        `<option value="${data.name}">
+          ${data.name}
+        </option>`;
+
+    });
+
+  }
+
+
+  // Payment list
+  if(paymentSelect){
+
+    paymentSelect.innerHTML = "";
+
+
+    snap.forEach((doc)=>{
+
+      const data = doc.data();
+
+      paymentSelect.innerHTML +=
+        `<option value="${data.name}">
+          ${data.name}
+        </option>`;
+
+    });
+
+  }
+
+
+  // Admin Member Management list
+  loadMemberManagementList();
+
+}
+
+
+// Admin Member List
+async function loadMemberManagementList(){
+
+  const box =
+    document.getElementById("memberManagementList");
+
+
+  if(!box){
+    return;
+  }
+
+
+  if(currentUser !== "Admin"){
+
+    box.innerHTML = "";
+
+    return;
+
+  }
+
+
+  const snap =
+    await db.collection("members").get();
+
+
+  box.innerHTML = "";
+
+
+  snap.forEach((doc)=>{
+
+    const data = doc.data();
+
+
+    box.innerHTML += `
+
+      <div
+        style="
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        padding:10px;
+        margin-bottom:8px;
+        border:1px solid #ddd;
+        border-radius:8px;
+        "
+      >
+
+        <div>
+          👤 <strong>${data.name}</strong>
+        </div>
+
+
+        <button
+          onclick="deleteMember('${doc.id}')"
+          style="
+          background:#dc2626;
+          color:white;
+          border:none;
+          padding:7px 12px;
+          border-radius:6px;
+          "
+        >
+          🗑 Delete
+        </button>
+
+      </div>
+
+    `;
+
+  });
+
+}
+
+
+// নতুন Member Add
+async function addMember(){
+
+  if(currentUser !== "Admin"){
+
+    alert("শুধু Admin Member Add করতে পারবে!");
+
+    return;
+
+  }
+
+
+  const name =
+    document.getElementById("newMemberName")
+      .value.trim();
+
+
+  const password =
+    document.getElementById("newMemberPassword")
+      .value.trim();
+
+
+  if(name === "" || password === ""){
+
+    alert("Member name এবং password দিন!");
+
+    return;
+
+  }
+
+
+  if(name === "Admin"){
+
+    alert("Admin নামে Member তৈরি করা যাবে না!");
+
+    return;
+
+  }
+
+
+  const existing =
+    await db.collection("members")
+      .doc(name)
+      .get();
+
+
+  if(existing.exists){
+
+    alert("এই Member আগে থেকেই আছে!");
+
+    return;
+
+  }
+
+
+  await db.collection("members")
+    .doc(name)
+    .set({
+
+      name:name,
+
+      password:password,
+
+      createdAt:Date.now()
+
+    });
+
+
+  alert(
+    name + " সফলভাবে Add হয়েছে!"
+  );
+
+
+  document.getElementById("newMemberName")
+    .value = "";
+
+
+  document.getElementById("newMemberPassword")
+    .value = "";
+
+
+  await loadMembers();
+
+}
+
+
+// Member Delete
+async function deleteMember(id){
+
+  if(currentUser !== "Admin"){
+
+    alert("শুধু Admin Member Delete করতে পারবে!");
+
+    return;
+
+  }
+
+
+  const docRef =
+    await db.collection("members")
+      .doc(id)
+      .get();
+
+
+  if(!docRef.exists){
+    return;
+  }
+
+
+  const data =
+    docRef.data();
+
+
+  const confirmDelete =
+    confirm(
+      data.name +
+      " Member-কে Delete করবেন?"
+    );
+
+
+  if(!confirmDelete){
+    return;
+  }
+
+
+  await db.collection("members")
+    .doc(id)
+    .delete();
+
+
+  alert(
+    data.name +
+    " Member Delete হয়েছে!"
+  );
+
+
+  await loadMembers();
+
+}
 
 const BREAKFAST_RATE = 20;
 const LUNCH_RATE = 50;
@@ -16,6 +329,8 @@ const DINNER_RATE = 50;
 let currentUser = "";
 
 window.onload = function(){
+
+    loadMembers();
 
 const savedUser = localStorage.getItem("loggedUser");
 const tomorrow = new Date();
@@ -97,91 +412,158 @@ loadFinancialSummary();
 
 };
 
-function login(){
+async function login(){
 
-const username = document.getElementById("username").value;
-const password = document.getElementById("password").value;
+  const username =
+    document.getElementById("username").value;
 
-if(users[username] === password){
-
-currentUser = username;
-    const paymentSelect = document.getElementById("paymentMember");
-
-if(paymentSelect && username !== "Admin"){
-
-paymentSelect.innerHTML =
-`<option value="${username}">${username}</option>`;
-
-}
-
-localStorage.setItem("loggedUser", username);
-setTimeout(() => {
-
-const noticeBox = document.getElementById("noticeText");
-if(noticeBox){
-loadNotice();
-}
-
-const mamaBox = document.getElementById("mamaHistoryBox");
-if(mamaBox){
-loadMamaPaymentHistory();
-}
-
-},1000);
-
-document.getElementById("loginPage").classList.add("hidden");
-document.getElementById("dashboard").classList.remove("hidden");
-setTimeout(async () => {
-
-if(typeof loadNotice === "function"){
-await loadNotice();
-}
-
-if(typeof loadMamaPaymentHistory === "function"){
-await loadMamaPaymentHistory();
-}
-
-if(typeof loadNextDayMeals === "function"){
-await loadNextDayMeals();
-}
-
-},1500);
+  const password =
+    document.getElementById("password").value;
 
 
-document.getElementById("welcome").innerText = "Welcome " + username;
+  if(username === ""){
 
-if(username === "Admin"){
-document.getElementById("mealBox").style.display = "none";
-document.getElementById("tableTitle").innerText = "All Member মিলের হিসাব";
+    alert("Account নির্বাচন করুন");
 
-if(document.querySelector(".member-cost-card")){
-document.querySelector(".member-cost-card").style.display = "block";
-}
+    return;
 
-}else{
+  }
 
-document.getElementById("tableTitle").innerText = "Your মিলের হিসাব";
 
-if(document.querySelector(".member-cost-card")){
-document.querySelector(".member-cost-card").style.display = "none";
-}
+  // Admin login
+  if(
+    username === "Admin" &&
+    password === "admin123"
+  ){
 
-if(document.getElementById("memberCostList")){
-document.getElementById("memberCostList").style.display = "none";
-}
+    currentUser = "Admin";
 
-}
+  }
 
-loadMeals();
-loadPayments();
-loadMamaPayments();
-loadMamaPaymentHistory();
-loadDepositRequests();
-loadFinancialSummary();
+  else{
 
-}else{
-alert("ভুল পাসওয়ার্ড");
-}
+    const memberRef =
+      await db.collection("members")
+        .doc(username)
+        .get();
+
+
+    if(
+      !memberRef.exists ||
+      memberRef.data().password !== password
+    ){
+
+      alert("ভুল পাসওয়ার্ড");
+
+      return;
+
+    }
+
+
+    currentUser = username;
+
+  }
+
+
+  localStorage.setItem(
+    "loggedUser",
+    currentUser
+  );
+
+
+  // Payment dropdown
+  const paymentSelect =
+    document.getElementById("paymentMember");
+
+
+  if(
+    paymentSelect &&
+    currentUser !== "Admin"
+  ){
+
+    paymentSelect.innerHTML =
+      `<option value="${currentUser}">
+        ${currentUser}
+      </option>`;
+
+  }
+
+
+  document.getElementById("loginPage")
+    .classList.add("hidden");
+
+
+  document.getElementById("dashboard")
+    .classList.remove("hidden");
+
+
+  document.getElementById("welcome")
+    .innerText =
+      "Welcome " + currentUser;
+
+
+  if(currentUser === "Admin"){
+
+    document.getElementById("mealBox")
+      .style.display = "none";
+
+    document.getElementById("tableTitle")
+      .innerText =
+        "All Member মিলের হিসাব";
+
+
+    if(document.querySelector(".member-cost-card")){
+
+      document.querySelector(
+        ".member-cost-card"
+      ).style.display = "block";
+
+    }
+
+
+    if(document.getElementById("memberCostList")){
+
+      document.getElementById(
+        "memberCostList"
+      ).style.display = "block";
+
+    }
+
+  }
+
+  else{
+
+    document.getElementById("tableTitle")
+      .innerText =
+        "Your মিলের হিসাব";
+
+
+    if(document.querySelector(".member-cost-card")){
+
+      document.querySelector(
+        ".member-cost-card"
+      ).style.display = "none";
+
+    }
+
+
+    if(document.getElementById("memberCostList")){
+
+      document.getElementById(
+        "memberCostList"
+      ).style.display = "none";
+
+    }
+
+  }
+
+
+  loadMeals();
+  loadPayments();
+  loadMamaPayments();
+  loadMamaPaymentHistory();
+  loadDepositRequests();
+  loadFinancialSummary();
 
 }
 
