@@ -1104,73 +1104,150 @@ loadFinancialSummary();
 
 async function loadFinancialSummary(){
 
-if(currentUser !== "Admin"){
-return;
-}
+  if(currentUser !== "Admin"){
+    return;
+  }
 
-const memberCostList = document.getElementById("memberCostList");
+  const memberCostList =
+    document.getElementById("memberCostList");
 
-const paymentsSnapshot = await db.collection("payments").get();
-const mealsSnapshot = await db.collection("meals").get();
+  const paymentsSnapshot =
+    await db.collection("payments").get();
 
-const deposits = {};
-const costs = {};
+  const mealsSnapshot =
+    await db.collection("meals").get();
 
-paymentsSnapshot.forEach((doc)=>{
+  const membersSnapshot =
+    await db.collection("members").get();
 
-const item = doc.data();
 
-if(item.status === "accepted"){
+  const deposits = {};
+  const costs = {};
+  const openingBalances = {};
 
-if(!deposits[item.user]){
-deposits[item.user] = 0;
-}
 
-deposits[item.user] += item.amount;
+  /* =========================
+     MEMBER OPENING BALANCE
+  ========================= */
 
-}
+  membersSnapshot.forEach((doc)=>{
 
-});
+    const item = doc.data();
 
-mealsSnapshot.forEach((doc)=>{
+    openingBalances[item.name] =
+      Number(item.openingBalance || 0);
 
-const item = doc.data();
+  });
 
-if(!costs[item.user]){
-costs[item.user] = 0;
-}
 
-costs[item.user] += item.totalCost;
+  /* =========================
+     DEPOSIT
+  ========================= */
 
-});
+  paymentsSnapshot.forEach((doc)=>{
 
-let html = "";
+    const item = doc.data();
 
-const users = new Set([
-...Object.keys(deposits),
-...Object.keys(costs)
-]);
+    if(item.status === "accepted"){
 
-users.forEach((user)=>{
+      if(!deposits[item.user]){
+        deposits[item.user] = 0;
+      }
 
-const deposit = deposits[user] || 0;
-const cost = costs[user] || 0;
-const balance = deposit - cost;
+      deposits[item.user] +=
+        Number(item.amount || 0);
 
-html += `
-<div class="member-item">
-<div>
-<strong>${user}</strong><br>
-Deposit: ৳ ${deposit}<br>
-Meal Cost: ৳ ${cost}<br>
-Balance: ৳ ${balance}
-</div>
-</div>
-`;
+    }
 
-});
+  });
 
-memberCostList.innerHTML = html;
+
+  /* =========================
+     MEAL COST
+  ========================= */
+
+  mealsSnapshot.forEach((doc)=>{
+
+    const item = doc.data();
+
+    if(!costs[item.user]){
+      costs[item.user] = 0;
+    }
+
+    costs[item.user] +=
+      Number(item.totalCost || 0);
+
+  });
+
+
+  /* =========================
+     USERS
+  ========================= */
+
+  const users = new Set([
+    ...Object.keys(deposits),
+    ...Object.keys(costs),
+    ...Object.keys(openingBalances)
+  ]);
+
+
+  let html = "";
+
+
+  users.forEach((user)=>{
+
+    const opening =
+      openingBalances[user] || 0;
+
+    const deposit =
+      deposits[user] || 0;
+
+    const cost =
+      costs[user] || 0;
+
+
+    /*
+      নতুন Balance:
+
+      আগের মাসের Balance
+      + নতুন Deposit
+      - নতুন Meal Cost
+    */
+
+    const balance =
+      opening + deposit - cost;
+
+
+    html += `
+      <div class="member-item">
+
+        <div>
+
+          <strong>${user}</strong><br>
+
+          Previous Balance:
+          ৳ ${opening}<br>
+
+          Deposit:
+          ৳ ${deposit}<br>
+
+          Meal Cost:
+          ৳ ${cost}<br>
+
+          <strong>
+            Balance:
+            ৳ ${balance}
+          </strong>
+
+        </div>
+
+      </div>
+    `;
+
+  });
+
+
+  memberCostList.innerHTML = html;
 
 }
 
@@ -1262,17 +1339,32 @@ document.getElementById("cancelClearBtn").style.display="none";
 
 async function clearAllMonthlyData(){
 
-  const collections = ["meals","payments","mamaPayments"];
+  if(currentUser !== "Admin"){
+    alert("শুধু Admin মাসের হিসাব ক্লিয়ার করতে পারবে!");
+    return;
+  }
 
-  // বর্তমান মাস নির্ধারণ
+  const collections = [
+    "meals",
+    "payments",
+    "mamaPayments"
+  ];
+
   const now = new Date();
 
   const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2,"0");
 
-  const monthKey = year + "-" + month;
+  const month =
+    String(now.getMonth() + 1).padStart(2,"0");
 
-  // Backup month information
+  const monthKey =
+    year + "-" + month;
+
+
+  /* =========================
+     CREATE ARCHIVE
+  ========================= */
+
   await db.collection("monthlyArchives")
     .doc(monthKey)
     .set({
@@ -1280,35 +1372,24 @@ async function clearAllMonthlyData(){
       createdAt: new Date().toISOString()
     });
 
+
+  /* =========================
+     ARCHIVE CURRENT MONTH
+  ========================= */
+
   for(const col of collections){
 
-    const snap = await db.collection(col).get();
+    const snap =
+      await db.collection(col).get();
 
     for(const docItem of snap.docs){
 
-      const data = docItem.data();
+      const data =
+        docItem.data();
 
-      // শুধু বর্তমান মাসের data archive হবে
       if(
-        col === "meals" &&
         data.date &&
-        data.date.startsWith(monthKey)
-      ){
-
-        await db.collection("monthlyArchives")
-          .doc(monthKey)
-          .collection(col)
-          .doc(docItem.id)
-          .set(data);
-
-        await db.collection(col)
-          .doc(docItem.id)
-          .delete();
-      }
-
-      else if(
-        col !== "meals" &&
-        data.date &&
+        typeof data.date === "string" &&
         data.date.startsWith(monthKey)
       ){
 
@@ -1327,8 +1408,178 @@ async function clearAllMonthlyData(){
 
   }
 
+
+  /* =========================
+     CALCULATE FINAL BALANCE
+     BEFORE STARTING NEW MONTH
+  ========================= */
+
+  const archiveMealSnap =
+    await db.collection("monthlyArchives")
+      .doc(monthKey)
+      .collection("meals")
+      .get();
+
+  const archivePaymentSnap =
+    await db.collection("monthlyArchives")
+      .doc(monthKey)
+      .collection("payments")
+      .get();
+
+
+  const memberData = {};
+
+
+  /* =========================
+     MEAL COST
+  ========================= */
+
+  archiveMealSnap.forEach((doc)=>{
+
+    const data =
+      doc.data();
+
+    if(!data.user){
+      return;
+    }
+
+    if(!memberData[data.user]){
+      memberData[data.user] = {
+        deposit: 0,
+        mealCost: 0
+      };
+    }
+
+    memberData[data.user].mealCost +=
+      Number(data.totalCost || 0);
+
+  });
+
+
+  /* =========================
+     ACCEPTED DEPOSIT
+  ========================= */
+
+  archivePaymentSnap.forEach((doc)=>{
+
+    const data =
+      doc.data();
+
+    if(
+      data.user &&
+      data.status === "accepted"
+    ){
+
+      if(!memberData[data.user]){
+        memberData[data.user] = {
+          deposit: 0,
+          mealCost: 0
+        };
+      }
+
+      memberData[data.user].deposit +=
+        Number(data.amount || 0);
+
+    }
+
+  });
+
+
+  /* =========================
+     SAVE OPENING BALANCE
+  ========================= */
+
+  for(const user in memberData){
+
+    const deposit =
+      memberData[user].deposit;
+
+    const mealCost =
+      memberData[user].mealCost;
+
+    const balance =
+      deposit - mealCost;
+
+
+    await db.collection("members")
+      .doc(user)
+      .set({
+
+        openingBalance: balance,
+
+        openingBalanceMonth: monthKey
+
+      },{
+
+        merge: true
+
+      });
+
+  }
+
+
+  /* =========================
+     KEEP ONLY 6 ARCHIVES
+  ========================= */
+
+  const archiveSnap =
+    await db.collection("monthlyArchives")
+      .orderBy("month","desc")
+      .get();
+
+
+  const archiveMonths =
+    archiveSnap.docs;
+
+
+  for(
+    let i = 6;
+    i < archiveMonths.length;
+    i++
+  ){
+
+    const oldMonth =
+      archiveMonths[i].id;
+
+    const oldArchiveRef =
+      db.collection("monthlyArchives")
+        .doc(oldMonth);
+
+
+    const subCollections = [
+      "meals",
+      "payments",
+      "mamaPayments"
+    ];
+
+
+    for(const subCol of subCollections){
+
+      const oldSnap =
+        await oldArchiveRef
+          .collection(subCol)
+          .get();
+
+
+      for(const oldDoc of oldSnap.docs){
+
+        await oldArchiveRef
+          .collection(subCol)
+          .doc(oldDoc.id)
+          .delete();
+
+      }
+
+    }
+
+    await oldArchiveRef.delete();
+
+  }
+
+
   alert(
-    "এই মাসের হিসাব Archive হয়েছে এবং বর্তমান হিসাব ক্লিয়ার হয়েছে।"
+    "এই মাসের হিসাব Archive হয়েছে।\n\n" +
+    "আগের মাসের Balance পরের মাসে চলে যাবে।"
   );
 
   location.reload();
