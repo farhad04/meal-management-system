@@ -85,21 +85,29 @@ async function loadMembers(){
   // Payment list
   if(paymentSelect){
 
-    paymentSelect.innerHTML = "";
+  paymentSelect.innerHTML = "";
 
+  if(currentUser === "Admin"){
 
     snap.forEach((doc)=>{
-
       const data = doc.data();
 
       paymentSelect.innerHTML +=
         `<option value="${data.name}">
           ${data.name}
         </option>`;
-
     });
 
+  }else if(currentUser !== ""){
+
+    paymentSelect.innerHTML =
+      `<option value="${currentUser}">
+        ${currentUser}
+      </option>`;
+
   }
+
+}
 
 
   // Admin Member Management list
