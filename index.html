@@ -132,49 +132,37 @@
             </div>
 
             <div class="stat-card">
-                <h4>🍽️ মোট মিলs</h4>
-                <p id="totalMeals">0</p>
-            </div>
-
-            <div class="stat-card">
-    <div style="
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        gap:8px;
-    ">
-        <h4 style="margin:0;">
-            💰 মোট খরচ
-        </h4>
-
-        <button
-            id="copyTomorrowMealBtn"
-            onclick="copyTomorrowMeal()"
-            style="
-                display:none;
-                width:auto;
-                padding:4px 7px;
-                font-size:11px;
-                line-height:1;
-                border:none;
-                border-radius:6px;
-                background:#22c55e;
-                color:white;
-                margin:0;
-            "
-        >
-            📋
-        </button>
-    </div>
-
-    <p>
-        ৳ <span id="totalCost">0</span>
-    </p>
+    <h4>🍽️ মোট মিলs</h4>
+    <p id="totalMeals">0</p>
 </div>
 
-        </div>
+<div class="stat-card">
+    <h4>💰 মোট খরচ</h4>
+    <p>৳ <span id="totalCost">0</span></p>
+</div>
 
-    </div>
+<button
+  id="copyTomorrowMealBtn"
+  onclick="copyTomorrowMeal()"
+  style="
+    display:none;
+    width:auto;
+    padding:10px 14px;
+    font-size:13px;
+    border:none;
+    border-radius:8px;
+    background:#22c55e;
+    color:white;
+    justify-self:center;
+    align-self:center;
+  "
+>
+  📋 কপি
+</button>
+
+</div>
+
+ </div>
 
     
         <div class="payment-card" id="paymentBox">
