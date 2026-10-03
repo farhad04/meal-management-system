@@ -376,7 +376,16 @@ loadNotice();
 document.getElementById("welcome").innerText = "Welcome " + currentUser;
 
 if(currentUser === "Admin"){
-document.getElementById("mealBox").style.display = "none";
+
+    const copyBtn =
+      document.getElementById("copyTomorrowMealBtn");
+
+    if(copyBtn){
+      copyBtn.style.display = "inline-block";
+    }
+
+    document.getElementById("mealBox")
+      .style.display = "none";
 document.getElementById("tableTitle").innerText = "All Member মিলের হিসাব";
 
 const memberCostCard = document.querySelector(".member-cost-card");
@@ -394,6 +403,12 @@ memberCostList.classList.remove("hidden");
 }
 }else{
 document.getElementById("tableTitle").innerText = "Your মিলের হিসাব";
+  const copyBtn =
+  document.getElementById("copyTomorrowMealBtn");
+
+if(copyBtn){
+  copyBtn.style.display = "none";
+}
 
 const memberCostCard = document.querySelector(".member-cost-card");
 const memberCostList = document.getElementById("memberCostList");
@@ -2878,3 +2893,85 @@ async function openArchivedMonth(monthKey){
 
   content.innerHTML = html;
                    }
+async function copyTomorrowMeal(){
+
+  const tomorrow = new Date();
+
+  tomorrow.setDate(
+    tomorrow.getDate() + 1
+  );
+
+  const year =
+    tomorrow.getFullYear();
+
+  const month =
+    String(tomorrow.getMonth() + 1)
+      .padStart(2,"0");
+
+  const day =
+    String(tomorrow.getDate())
+      .padStart(2,"0");
+
+  const dateStr =
+    year + "-" + month + "-" + day;
+
+
+  const snap =
+    await db.collection("meals")
+      .where("date","==",dateStr)
+      .get();
+
+
+  let breakfast = 0;
+  let lunch = 0;
+  let dinner = 0;
+
+
+  snap.forEach((doc)=>{
+
+    const data = doc.data();
+
+    breakfast +=
+      Number(data.breakfast || 0);
+
+    lunch +=
+      Number(data.lunch || 0);
+
+    dinner +=
+      Number(data.dinner || 0);
+
+  });
+
+
+  const displayDate =
+    day + "-" +
+    month + "-" +
+    String(year).slice(-2);
+
+
+  const text =
+`তারিখ : ${displayDate}
+সকাল : ${breakfast} টা
+দুপুর : ${lunch} টা
+রাত : ${dinner} টা`;
+
+
+  try{
+
+    await navigator.clipboard.writeText(text);
+
+    alert(
+      "📋 আগামী দিনের মিল কপি হয়েছে!\n\n" +
+      text
+    );
+
+  }catch(error){
+
+    alert(
+      "কপি করা যায়নি।\n\n" +
+      text
+    );
+
+  }
+
+}
