@@ -137,9 +137,29 @@
             </div>
 
             <div class="stat-card">
-                <h4>💰 মোট খরচ</h4>
-                <p>৳ <span id="totalCost">0</span></p>
-            </div>
+    <h4>
+        💰 মোট খরচ
+        <button
+            id="copyTomorrowMealBtn"
+            onclick="copyTomorrowMeal()"
+            style="
+                display:none;
+                width:auto;
+                padding:4px 8px;
+                font-size:12px;
+                border:none;
+                border-radius:6px;
+                background:#22c55e;
+                color:white;
+                margin-left:5px;
+            "
+        >
+            📋
+        </button>
+    </h4>
+
+    <p>৳ <span id="totalCost">0</span></p>
+</div>
 
         </div>
 
