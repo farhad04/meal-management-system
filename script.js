@@ -881,6 +881,24 @@ if(currentUser === "Admin"){
     );
 
   }
+  const dateParts = targetDate.split("-");
+
+const displayDate =
+  dateParts[2] + "-" +
+  dateParts[1] + "-" +
+  dateParts[0];
+
+const adminMealDate =
+  document.getElementById("adminMealDate");
+
+if(adminMealDate){
+
+  adminMealDate.innerText =
+    "📅 Meal Date: " + displayDate;
+
+  adminMealDate.style.display = "block";
+
+}
 
 
   // ==================================
