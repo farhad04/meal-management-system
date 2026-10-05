@@ -841,39 +841,139 @@ ${currentUser === "Admin" ? `
 });
 
 
-// ADMIN next-day stats only
+// ADMIN MEAL DISPLAY
 if(currentUser === "Admin"){
 
-const tomorrow = new Date();
-tomorrow.setDate(tomorrow.getDate()+1);
+  const now = new Date();
 
-const nextDate = tomorrow.toISOString().split("T")[0];
+  // আজকের তারিখ
+  const todayStr =
+    now.getFullYear() + "-" +
+    String(now.getMonth() + 1).padStart(2,"0") + "-" +
+    String(now.getDate()).padStart(2,"0");
 
-let nextBreakfast = 0;
-let nextLunch = 0;
-let nextDinner = 0;
 
-snapshot.forEach((doc)=>{
+  // ==================================
+  // যে তারিখের মিল দেখানো হবে
+  // ==================================
 
-const item = doc.data();
+  let targetDate =
+    localStorage.getItem("adminMealTargetDate");
 
-if(item.date === nextDate){
 
-nextBreakfast += Number(item.breakfast || 0);
-nextLunch += Number(item.lunch || 0);
-nextDinner += Number(item.dinner || 0);
+  // প্রথমবার হলে আগামীকালের তারিখ
+  if(!targetDate){
 
-}
+    const tomorrow = new Date(now);
 
-});
+    tomorrow.setDate(
+      tomorrow.getDate() + 1
+    );
 
-document.getElementById("totalBreakfast").innerText = nextBreakfast;
-document.getElementById("totalLunch").innerText = nextLunch;
-document.getElementById("totalDinner").innerText = nextDinner;
+    targetDate =
+      tomorrow.getFullYear() + "-" +
+      String(tomorrow.getMonth() + 1).padStart(2,"0") + "-" +
+      String(tomorrow.getDate()).padStart(2,"0");
 
-// keep old totals
-document.getElementById("totalMeals").innerText = totalMeals;
-document.getElementById("totalCost").innerText = totalCost;
+    localStorage.setItem(
+      "adminMealTargetDate",
+      targetDate
+    );
+
+  }
+
+
+  // ==================================
+  // দুপুর ১টার পর হলে পরের দিনের
+  // মিল দেখাবে
+  // ==================================
+
+  const todayOnePM =
+    new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      13,
+      0,
+      0
+    );
+
+
+  if(now >= todayOnePM){
+
+    const target =
+      new Date(targetDate + "T00:00:00");
+
+    // যদি আজকের target হয়ে থাকে,
+    // তাহলে একদিন এগিয়ে যাবে
+    if(targetDate <= todayStr){
+
+      target.setDate(
+        target.getDate() + 1
+      );
+
+      targetDate =
+        target.getFullYear() + "-" +
+        String(target.getMonth() + 1).padStart(2,"0") + "-" +
+        String(target.getDate()).padStart(2,"0");
+
+      localStorage.setItem(
+        "adminMealTargetDate",
+        targetDate
+      );
+
+    }
+
+  }
+
+
+  // ==================================
+  // Target date-এর meal count
+  // ==================================
+
+  let nextBreakfast = 0;
+  let nextLunch = 0;
+  let nextDinner = 0;
+
+
+  snapshot.forEach((doc)=>{
+
+    const item = doc.data();
+
+
+    if(item.date === targetDate){
+
+      nextBreakfast +=
+        Number(item.breakfast || 0);
+
+      nextLunch +=
+        Number(item.lunch || 0);
+
+      nextDinner +=
+        Number(item.dinner || 0);
+
+    }
+
+  });
+
+
+  document.getElementById("totalBreakfast").innerText =
+    nextBreakfast;
+
+  document.getElementById("totalLunch").innerText =
+    nextLunch;
+
+  document.getElementById("totalDinner").innerText =
+    nextDinner;
+
+
+  // মোট মিল ও মোট খরচ আগের মতো থাকবে
+  document.getElementById("totalMeals").innerText =
+    totalMeals;
+
+  document.getElementById("totalCost").innerText =
+    totalCost;
+
 
 }else{
 
@@ -2895,30 +2995,101 @@ async function openArchivedMonth(monthKey){
                    }
 async function copyTomorrowMeal(){
 
-  const tomorrow = new Date();
+  if(currentUser !== "Admin"){
+    alert("শুধু Admin কপি করতে পারবে!");
+    return;
+  }
 
-  tomorrow.setDate(
-    tomorrow.getDate() + 1
-  );
 
-  const year =
-    tomorrow.getFullYear();
+  // ==============================
+  // Admin Card-এর target date বের করা
+  // ==============================
 
-  const month =
-    String(tomorrow.getMonth() + 1)
-      .padStart(2,"0");
+  const now = new Date();
 
-  const day =
-    String(tomorrow.getDate())
-      .padStart(2,"0");
+  const todayStr =
+    now.getFullYear() + "-" +
+    String(now.getMonth() + 1).padStart(2,"0") + "-" +
+    String(now.getDate()).padStart(2,"0");
 
-  const dateStr =
-    year + "-" + month + "-" + day;
 
+  let targetDate =
+    localStorage.getItem("adminMealTargetDate");
+
+
+  // প্রথমবার হলে নিয়ম অনুযায়ী target date
+  if(!targetDate){
+
+    const tomorrow = new Date(now);
+
+    tomorrow.setDate(
+      tomorrow.getDate() + 1
+    );
+
+    targetDate =
+      tomorrow.getFullYear() + "-" +
+      String(tomorrow.getMonth() + 1).padStart(2,"0") + "-" +
+      String(tomorrow.getDate()).padStart(2,"0");
+
+    localStorage.setItem(
+      "adminMealTargetDate",
+      targetDate
+    );
+
+  }
+
+
+  // ==============================
+  // দুপুর ১টার পর target update
+  // ==============================
+
+  const todayOnePM =
+    new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      13,
+      0,
+      0
+    );
+
+
+  if(now >= todayOnePM){
+
+    const target =
+      new Date(targetDate + "T00:00:00");
+
+
+    if(targetDate <= todayStr){
+
+      target.setDate(
+        target.getDate() + 1
+      );
+
+
+      targetDate =
+        target.getFullYear() + "-" +
+        String(target.getMonth() + 1).padStart(2,"0") + "-" +
+        String(target.getDate()).padStart(2,"0");
+
+
+      localStorage.setItem(
+        "adminMealTargetDate",
+        targetDate
+      );
+
+    }
+
+  }
+
+
+  // ==============================
+  // Target date-এর meal
+  // ==============================
 
   const snap =
     await db.collection("meals")
-      .where("date","==",dateStr)
+      .where("date","==",targetDate)
       .get();
 
 
@@ -2931,11 +3102,14 @@ async function copyTomorrowMeal(){
 
     const data = doc.data();
 
+
     breakfast +=
       Number(data.breakfast || 0);
 
+
     lunch +=
       Number(data.lunch || 0);
+
 
     dinner +=
       Number(data.dinner || 0);
@@ -2943,10 +3117,18 @@ async function copyTomorrowMeal(){
   });
 
 
+  // ==============================
+  // Date format
+  // ==============================
+
+  const parts =
+    targetDate.split("-");
+
+
   const displayDate =
-    day + "-" +
-    month + "-" +
-    String(year).slice(-2);
+    parts[2] + "-" +
+    parts[1] + "-" +
+    String(parts[0]).slice(-2);
 
 
   const text =
@@ -2956,14 +3138,20 @@ async function copyTomorrowMeal(){
 রাত : ${dinner} টা`;
 
 
+  // ==============================
+  // Copy
+  // ==============================
+
   try{
 
     await navigator.clipboard.writeText(text);
 
+
     alert(
-      "📋 আগামী দিনের মিল কপি হয়েছে!\n\n" +
+      "📋 Meal কপি হয়েছে!\n\n" +
       text
     );
+
 
   }catch(error){
 
