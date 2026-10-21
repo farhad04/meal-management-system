@@ -842,107 +842,36 @@ ${currentUser === "Admin" ? `
 
 
 // ADMIN MEAL DISPLAY
-if(currentUser === "Admin"){
 
   const now = new Date();
 
-  // আজকের তারিখ
-  const todayStr =
-    now.getFullYear() + "-" +
-    String(now.getMonth() + 1).padStart(2,"0") + "-" +
-    String(now.getDate()).padStart(2,"0");
+  // দুপুর ১টার আগে আজ, ১টা থেকে আগামীকাল
+  const target = new Date(now);
 
-
-  // ==================================
-  // যে তারিখের মিল দেখানো হবে
-  // ==================================
-
-  let targetDate =
-    localStorage.getItem("adminMealTargetDate");
-
-
-  // প্রথমবার হলে আগামীকালের তারিখ
-  if(!targetDate){
-
-    const tomorrow = new Date(now);
-
-    tomorrow.setDate(
-      tomorrow.getDate() + 1
-    );
-
-    targetDate =
-      tomorrow.getFullYear() + "-" +
-      String(tomorrow.getMonth() + 1).padStart(2,"0") + "-" +
-      String(tomorrow.getDate()).padStart(2,"0");
-
-    localStorage.setItem(
-      "adminMealTargetDate",
-      targetDate
-    );
-
-  }
-  
-
-
-  // ==================================
-  // দুপুর ১টার পর হলে পরের দিনের
-  // মিল দেখাবে
-  // ==================================
-
-  const todayOnePM =
-    new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-      13,
-      0,
-      0
-    );
-
-
-  
-if(now >= todayOnePM){
-
-  const target =
-    new Date(targetDate + "T00:00:00");
-
-  if(targetDate <= todayStr){
-
-    target.setDate(
-      target.getDate() + 1
-    );
-
-    targetDate =
-      target.getFullYear() + "-" +
-      String(target.getMonth() + 1).padStart(2,"0") + "-" +
-      String(target.getDate()).padStart(2,"0");
-
-    localStorage.setItem(
-      "adminMealTargetDate",
-      targetDate
-    );
-
+  if (now.getHours() >= 13) {
+    target.setDate(target.getDate() + 1);
   }
 
-}
+  const targetDate =
+    target.getFullYear() + "-" +
+    String(target.getMonth() + 1).padStart(2, "0") + "-" +
+    String(target.getDate()).padStart(2, "0");
 
-  
-const dateParts = targetDate.split("-");
+  const dateParts = targetDate.split("-");
 
-const displayDate =
-  dateParts[2] + "-" +
-  dateParts[1] + "-" +
-  dateParts[0];
+  const displayDate =
+    dateParts[2] + "-" +
+    dateParts[1] + "-" +
+    dateParts[0];
 
-const adminMealDate =
-  document.getElementById("adminMealDate");
+  const adminMealDate =
+    document.getElementById("adminMealDate");
 
-if (adminMealDate) {
-  adminMealDate.innerText =
-    "📅 Meal Date: " + displayDate;
+  if (adminMealDate) {
+    adminMealDate.innerText = "📅 Meal Date: " + displayDate;
+    adminMealDate.style.display = "block";
+  }
 
-  adminMealDate.style.display = "block";
-}
 
 
 
@@ -3024,82 +2953,19 @@ async function copyTomorrowMeal(){
   // Admin Card-এর target date বের করা
   // ==============================
 
+
   const now = new Date();
+  const target = new Date(now);
 
-  const todayStr =
-    now.getFullYear() + "-" +
-    String(now.getMonth() + 1).padStart(2,"0") + "-" +
-    String(now.getDate()).padStart(2,"0");
-
-
-  let targetDate =
-    localStorage.getItem("adminMealTargetDate");
-
-
-  // প্রথমবার হলে নিয়ম অনুযায়ী target date
-  if(!targetDate){
-
-    const tomorrow = new Date(now);
-
-    tomorrow.setDate(
-      tomorrow.getDate() + 1
-    );
-
-    targetDate =
-      tomorrow.getFullYear() + "-" +
-      String(tomorrow.getMonth() + 1).padStart(2,"0") + "-" +
-      String(tomorrow.getDate()).padStart(2,"0");
-
-    localStorage.setItem(
-      "adminMealTargetDate",
-      targetDate
-    );
-
+  if (now.getHours() >= 13) {
+    target.setDate(target.getDate() + 1);
   }
 
+  const targetDate =
+    target.getFullYear() + "-" +
+    String(target.getMonth() + 1).padStart(2, "0") + "-" +
+    String(target.getDate()).padStart(2, "0");
 
-  // ==============================
-  // দুপুর ১টার পর target update
-  // ==============================
-
-  const todayOnePM =
-    new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate(),
-      13,
-      0,
-      0
-    );
-
-
-  if(now >= todayOnePM){
-
-    const target =
-      new Date(targetDate + "T00:00:00");
-
-
-    if(targetDate <= todayStr){
-
-      target.setDate(
-        target.getDate() + 1
-      );
-
-
-      targetDate =
-        target.getFullYear() + "-" +
-        String(target.getMonth() + 1).padStart(2,"0") + "-" +
-        String(target.getDate()).padStart(2,"0");
-
-
-      localStorage.setItem(
-        "adminMealTargetDate",
-        targetDate
-      );
-
-    }
-
-  }
 
 
   // ==============================
