@@ -900,32 +900,42 @@ if(currentUser === "Admin"){
     );
 
 
-  if(now >= todayOnePM){
+  
+const todayOnePM = new Date(
+  now.getFullYear(),
+  now.getMonth(),
+  now.getDate(),
+  13, 0, 0
+);
 
-    const target =
-      new Date(targetDate + "T00:00:00");
+const tomorrow = new Date(now);
+tomorrow.setDate(tomorrow.getDate() + 1);
 
-    // যদি আজকের target হয়ে থাকে,
-    // তাহলে একদিন এগিয়ে যাবে
-    if(targetDate <= todayStr){
+const tomorrowStr =
+  tomorrow.getFullYear() + "-" +
+  String(tomorrow.getMonth() + 1).padStart(2, "0") + "-" +
+  String(tomorrow.getDate()).padStart(2, "0");
 
-      target.setDate(
-        target.getDate() + 1
-      );
+// দুপুর ১টার আগে পুরোনো তারিখ থাকলে আজকের তারিখ দেখাবে
+if (now < todayOnePM && targetDate < todayStr) {
+  targetDate = todayStr;
 
-      targetDate =
-        target.getFullYear() + "-" +
-        String(target.getMonth() + 1).padStart(2,"0") + "-" +
-        String(target.getDate()).padStart(2,"0");
+  localStorage.setItem(
+    "adminMealTargetDate",
+    targetDate
+  );
+}
 
-      localStorage.setItem(
-        "adminMealTargetDate",
-        targetDate
-      );
+// দুপুর ১টার পর আজ বা তার আগের তারিখ থাকলে আগামীকাল দেখাবে
+if (now >= todayOnePM && targetDate <= todayStr) {
+  targetDate = tomorrowStr;
 
-    }
+  localStorage.setItem(
+    "adminMealTargetDate",
+    targetDate
+  );
+}
 
-  }
   
 const dateParts = targetDate.split("-");
 
