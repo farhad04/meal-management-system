@@ -1,296 +1,332 @@
+
 const users = {
-Admin:"admin123"
+  Admin:"admin123"
 };
 // ==============================
 // MEMBER MANAGEMENT SYSTEM
 // ==============================
 
 const defaultMembers = {
-Farhad:"1234",
-Rakim:"1234",
-HadiandBatman:"1234",
-Rizvi:"1234",
-Rabby:"1234",
-Jahid:"1234"
+  Farhad:"1234",
+  Rakim:"1234",
+  HadiandBatman:"1234",
+  Rizvi:"1234",
+  Rabby:"1234",
+  Jahid:"1234"
 };
+
 
 // প্রথমবার Members collection তৈরি
 async function initializeMembers(){
 
-const snap =
-await db.collection("members").limit(1).get();
+  const snap =
+    await db.collection("members").limit(1).get();
 
-// যদি আগে থেকেই member থাকে তাহলে কিছু করবে না
-if(!snap.empty){
-return;
+  // যদি আগে থেকেই member থাকে তাহলে কিছু করবে না
+  if(!snap.empty){
+    return;
+  }
+
+
+  for(const name in defaultMembers){
+
+    await db.collection("members")
+      .doc(name)
+      .set({
+        name:name,
+        password:defaultMembers[name],
+        createdAt:Date.now()
+      });
+
+  }
+
 }
 
-for(const name in defaultMembers){
-
-await db.collection("members")  
-  .doc(name)  
-  .set({  
-    name:name,  
-    password:defaultMembers[name],  
-    createdAt:Date.now()  
-  });
-
-}
-
-}
 
 // সব Member load
 async function loadMembers(){
 
-await initializeMembers();
-
-const snap =
-await db.collection("members").get();
-
-const loginSelect =
-document.getElementById("username");
-
-const paymentSelect =
-document.getElementById("paymentMember");
-
-// Login list
-if(loginSelect){
-
-loginSelect.innerHTML =  
-  `<option value="">Select Account</option>  
-   <option value="Admin">Admin</option>`;  
+  await initializeMembers();
 
 
-snap.forEach((doc)=>{  
+  const snap =
+    await db.collection("members").get();
 
-  const data = doc.data();  
 
-  loginSelect.innerHTML +=  
-    `<option value="${data.name}">  
-      ${data.name}  
-    </option>`;  
+  const loginSelect =
+    document.getElementById("username");
 
-});
+  const paymentSelect =
+    document.getElementById("paymentMember");
+
+
+  // Login list
+  if(loginSelect){
+
+    loginSelect.innerHTML =
+      `<option value="">Select Account</option>
+       <option value="Admin">Admin</option>`;
+
+
+    snap.forEach((doc)=>{
+
+      const data = doc.data();
+
+      loginSelect.innerHTML +=
+        `<option value="${data.name}">
+          ${data.name}
+        </option>`;
+
+    });
+
+  }
+
+
+  // Payment list
+  if(paymentSelect){
+
+  paymentSelect.innerHTML = "";
+
+  if(currentUser === "Admin"){
+
+    snap.forEach((doc)=>{
+      const data = doc.data();
+
+      paymentSelect.innerHTML +=
+        `<option value="${data.name}">
+          ${data.name}
+        </option>`;
+    });
+
+  }else if(currentUser !== ""){
+
+    paymentSelect.innerHTML =
+      `<option value="${currentUser}">
+        ${currentUser}
+      </option>`;
+
+  }
 
 }
 
-// Payment list
-if(paymentSelect){
 
-paymentSelect.innerHTML = "";
-
-if(currentUser === "Admin"){
-
-snap.forEach((doc)=>{  
-  const data = doc.data();  
-
-  paymentSelect.innerHTML +=  
-    `<option value="${data.name}">  
-      ${data.name}  
-    </option>`;  
-});
-
-}else if(currentUser !== ""){
-
-paymentSelect.innerHTML =  
-  `<option value="${currentUser}">  
-    ${currentUser}  
-  </option>`;
+  // Admin Member Management list
+  loadMemberManagementList();
 
 }
 
-}
-
-// Admin Member Management list
-loadMemberManagementList();
-
-}
 
 // Admin Member List
 async function loadMemberManagementList(){
 
-const box =
-document.getElementById("memberManagementList");
+  const box =
+    document.getElementById("memberManagementList");
 
-if(!box){
-return;
+
+  if(!box){
+    return;
+  }
+
+
+  if(currentUser !== "Admin"){
+
+    box.innerHTML = "";
+
+    return;
+
+  }
+
+
+  const snap =
+    await db.collection("members").get();
+
+
+  box.innerHTML = "";
+
+
+  snap.forEach((doc)=>{
+
+    const data = doc.data();
+
+
+    box.innerHTML += `
+
+      <div
+        style="
+        display:flex;
+        justify-content:space-between;
+        align-items:center;
+        padding:10px;
+        margin-bottom:8px;
+        border:1px solid #ddd;
+        border-radius:8px;
+        "
+      >
+
+        <div>
+          👤 <strong>${data.name}</strong>
+        </div>
+
+
+        <button
+          onclick="deleteMember('${doc.id}')"
+          style="
+          background:#dc2626;
+          color:white;
+          border:none;
+          padding:7px 12px;
+          border-radius:6px;
+          "
+        >
+          🗑 Delete
+        </button>
+
+      </div>
+
+    `;
+
+  });
+
 }
 
-if(currentUser !== "Admin"){
-
-box.innerHTML = "";  
-
-return;
-
-}
-
-const snap =
-await db.collection("members").get();
-
-box.innerHTML = "";
-
-snap.forEach((doc)=>{
-
-const data = doc.data();  
-
-
-box.innerHTML += `  
-
-  <div  
-    style="  
-    display:flex;  
-    justify-content:space-between;  
-    align-items:center;  
-    padding:10px;  
-    margin-bottom:8px;  
-    border:1px solid #ddd;  
-    border-radius:8px;  
-    "  
-  >  
-
-    <div>  
-      👤 <strong>${data.name}</strong>  
-    </div>  
-
-
-    <button  
-      onclick="deleteMember('${doc.id}')"  
-      style="  
-      background:#dc2626;  
-      color:white;  
-      border:none;  
-      padding:7px 12px;  
-      border-radius:6px;  
-      "  
-    >  
-      🗑 Delete  
-    </button>  
-
-  </div>  
-
-`;
-
-});
-
-}
 
 // নতুন Member Add
 async function addMember(){
 
-if(currentUser !== "Admin"){
+  if(currentUser !== "Admin"){
 
-alert("শুধু Admin Member Add করতে পারবে!");  
+    alert("শুধু Admin Member Add করতে পারবে!");
 
-return;
+    return;
+
+  }
+
+
+  const name =
+    document.getElementById("newMemberName")
+      .value.trim();
+
+
+  const password =
+    document.getElementById("newMemberPassword")
+      .value.trim();
+
+
+  if(name === "" || password === ""){
+
+    alert("Member name এবং password দিন!");
+
+    return;
+
+  }
+
+
+  if(name === "Admin"){
+
+    alert("Admin নামে Member তৈরি করা যাবে না!");
+
+    return;
+
+  }
+
+
+  const existing =
+    await db.collection("members")
+      .doc(name)
+      .get();
+
+
+  if(existing.exists){
+
+    alert("এই Member আগে থেকেই আছে!");
+
+    return;
+
+  }
+
+
+  await db.collection("members")
+    .doc(name)
+    .set({
+
+      name:name,
+
+      password:password,
+
+      createdAt:Date.now()
+
+    });
+
+
+  alert(
+    name + " সফলভাবে Add হয়েছে!"
+  );
+
+
+  document.getElementById("newMemberName")
+    .value = "";
+
+
+  document.getElementById("newMemberPassword")
+    .value = "";
+
+
+  await loadMembers();
 
 }
 
-const name =
-document.getElementById("newMemberName")
-.value.trim();
-
-const password =
-document.getElementById("newMemberPassword")
-.value.trim();
-
-if(name === "" || password === ""){
-
-alert("Member name এবং password দিন!");  
-
-return;
-
-}
-
-if(name === "Admin"){
-
-alert("Admin নামে Member তৈরি করা যাবে না!");  
-
-return;
-
-}
-
-const existing =
-await db.collection("members")
-.doc(name)
-.get();
-
-if(existing.exists){
-
-alert("এই Member আগে থেকেই আছে!");  
-
-return;
-
-}
-
-await db.collection("members")
-.doc(name)
-.set({
-
-name:name,  
-
-  password:password,  
-
-  createdAt:Date.now()  
-
-});
-
-alert(
-name + " সফলভাবে Add হয়েছে!"
-);
-
-document.getElementById("newMemberName")
-.value = "";
-
-document.getElementById("newMemberPassword")
-.value = "";
-
-await loadMembers();
-
-}
 
 // Member Delete
 async function deleteMember(id){
 
-if(currentUser !== "Admin"){
+  if(currentUser !== "Admin"){
 
-alert("শুধু Admin Member Delete করতে পারবে!");  
+    alert("শুধু Admin Member Delete করতে পারবে!");
 
-return;
+    return;
 
-}
+  }
 
-const docRef =
-await db.collection("members")
-.doc(id)
-.get();
 
-if(!docRef.exists){
-return;
-}
+  const docRef =
+    await db.collection("members")
+      .doc(id)
+      .get();
 
-const data =
-docRef.data();
 
-const confirmDelete =
-confirm(
-data.name +
-" Member-কে Delete করবেন?"
-);
+  if(!docRef.exists){
+    return;
+  }
 
-if(!confirmDelete){
-return;
-}
 
-await db.collection("members")
-.doc(id)
-.delete();
+  const data =
+    docRef.data();
 
-alert(
-data.name +
-" Member Delete হয়েছে!"
-);
 
-await loadMembers();
+  const confirmDelete =
+    confirm(
+      data.name +
+      " Member-কে Delete করবেন?"
+    );
+
+
+  if(!confirmDelete){
+    return;
+  }
+
+
+  await db.collection("members")
+    .doc(id)
+    .delete();
+
+
+  alert(
+    data.name +
+    " Member Delete হয়েছে!"
+  );
+
+
+  await loadMembers();
 
 }
 
@@ -302,7 +338,7 @@ let currentUser = "";
 
 window.onload = function(){
 
-loadMembers();
+    loadMembers();
 
 const savedUser = localStorage.getItem("loggedUser");
 const tomorrow = new Date();
@@ -341,16 +377,15 @@ document.getElementById("welcome").innerText = "Welcome " + currentUser;
 
 if(currentUser === "Admin"){
 
-const copyBtn =  
-  document.getElementById("copyTomorrowMealBtn");  
+    const copyBtn =
+      document.getElementById("copyTomorrowMealBtn");
 
-if(copyBtn){  
-  copyBtn.style.display = "inline-block";  
-}  
+    if(copyBtn){
+      copyBtn.style.display = "inline-block";
+    }
 
-document.getElementById("mealBox")  
-  .style.display = "none";
-
+    document.getElementById("mealBox")
+      .style.display = "none";
 document.getElementById("tableTitle").innerText = "All Member মিলের হিসাব";
 
 const memberCostCard = document.querySelector(".member-cost-card");
@@ -368,11 +403,11 @@ memberCostList.classList.remove("hidden");
 }
 }else{
 document.getElementById("tableTitle").innerText = "Your মিলের হিসাব";
-const copyBtn =
-document.getElementById("copyTomorrowMealBtn");
+  const copyBtn =
+  document.getElementById("copyTomorrowMealBtn");
 
 if(copyBtn){
-copyBtn.style.display = "none";
+  copyBtn.style.display = "none";
 }
 
 const memberCostCard = document.querySelector(".member-cost-card");
@@ -401,334 +436,351 @@ loadFinancialSummary();
 };
 function toggleMemberManagement(){
 
-const box =
-document.getElementById("memberManagementBox");
+  const box =
+    document.getElementById("memberManagementBox");
 
-if(box.style.display === "none"){
+  if(box.style.display === "none"){
 
-box.style.display = "block";  
+    box.style.display = "block";
 
-loadMemberManagementList();
+    loadMemberManagementList();
 
-}else{
+  }else{
 
-box.style.display = "none";
+    box.style.display = "none";
 
-}
+  }
 
 }
 
 async function login(){
 
-const username =
-document.getElementById("username").value;
+  const username =
+    document.getElementById("username").value;
 
-const password =
-document.getElementById("password").value;
-
-if(username === ""){
-
-alert("Account নির্বাচন করুন");  
-
-return;
-
-}
-
-// Admin login
-if(
-username === "Admin" &&
-password === "admin123"
-){
-
-currentUser = "Admin";
-
-}
-
-else{
-
-const memberRef =  
-  await db.collection("members")  
-    .doc(username)  
-    .get();  
+  const password =
+    document.getElementById("password").value;
 
 
-if(  
-  !memberRef.exists ||  
-  memberRef.data().password !== password  
-){  
+  if(username === ""){
 
-  alert("ভুল পাসওয়ার্ড");  
+    alert("Account নির্বাচন করুন");
 
-  return;  
+    return;
 
-}  
+  }
 
 
-currentUser = username;
+  // Admin login
+  if(
+    username === "Admin" &&
+    password === "admin123"
+  ){
 
-}
+    currentUser = "Admin";
 
-localStorage.setItem(
-"loggedUser",
-currentUser
-);
+  }
 
-// Payment dropdown
-const paymentSelect =
-document.getElementById("paymentMember");
+  else{
 
-if(
-paymentSelect &&
-currentUser !== "Admin"
-){
-
-paymentSelect.innerHTML =  
-  `<option value="${currentUser}">  
-    ${currentUser}  
-  </option>`;
-
-}
-
-document.getElementById("loginPage")
-.classList.add("hidden");
-
-document.getElementById("dashboard")
-.classList.remove("hidden");
-
-document.getElementById("welcome")
-.innerText =
-"Welcome " + currentUser;
-
-if(currentUser === "Admin"){
-
-document.getElementById("mealBox")  
-  .style.display = "none";  
-
-document.getElementById("tableTitle")  
-  .innerText =  
-    "All Member মিলের হিসাব";  
+    const memberRef =
+      await db.collection("members")
+        .doc(username)
+        .get();
 
 
-if(document.querySelector(".member-cost-card")){  
+    if(
+      !memberRef.exists ||
+      memberRef.data().password !== password
+    ){
 
-  document.querySelector(  
-    ".member-cost-card"  
-  ).style.display = "block";  
+      alert("ভুল পাসওয়ার্ড");
 
-}  
+      return;
 
-
-if(document.getElementById("memberCostList")){  
-
-  document.getElementById(  
-    "memberCostList"  
-  ).style.display = "block";  
-
-}
-
-}
-
-else{
-
-document.getElementById("tableTitle")  
-  .innerText =  
-    "Your মিলের হিসাব";  
+    }
 
 
-if(document.querySelector(".member-cost-card")){  
+    currentUser = username;
 
-  document.querySelector(  
-    ".member-cost-card"  
-  ).style.display = "none";  
-
-}  
+  }
 
 
-if(document.getElementById("memberCostList")){  
+  localStorage.setItem(
+    "loggedUser",
+    currentUser
+  );
 
-  document.getElementById(  
-    "memberCostList"  
-  ).style.display = "none";  
 
-}
+  // Payment dropdown
+  const paymentSelect =
+    document.getElementById("paymentMember");
 
-}
 
-loadMeals();
-loadPayments();
-loadMamaPayments();
-loadMamaPaymentHistory();
-loadDepositRequests();
-loadFinancialSummary();
+  if(
+    paymentSelect &&
+    currentUser !== "Admin"
+  ){
+
+    paymentSelect.innerHTML =
+      `<option value="${currentUser}">
+        ${currentUser}
+      </option>`;
+
+  }
+
+
+  document.getElementById("loginPage")
+    .classList.add("hidden");
+
+
+  document.getElementById("dashboard")
+    .classList.remove("hidden");
+
+
+  document.getElementById("welcome")
+    .innerText =
+      "Welcome " + currentUser;
+
+
+  if(currentUser === "Admin"){
+
+    document.getElementById("mealBox")
+      .style.display = "none";
+
+    document.getElementById("tableTitle")
+      .innerText =
+        "All Member মিলের হিসাব";
+
+
+    if(document.querySelector(".member-cost-card")){
+
+      document.querySelector(
+        ".member-cost-card"
+      ).style.display = "block";
+
+    }
+
+
+    if(document.getElementById("memberCostList")){
+
+      document.getElementById(
+        "memberCostList"
+      ).style.display = "block";
+
+    }
+
+  }
+
+  else{
+
+    document.getElementById("tableTitle")
+      .innerText =
+        "Your মিলের হিসাব";
+
+
+    if(document.querySelector(".member-cost-card")){
+
+      document.querySelector(
+        ".member-cost-card"
+      ).style.display = "none";
+
+    }
+
+
+    if(document.getElementById("memberCostList")){
+
+      document.getElementById(
+        "memberCostList"
+      ).style.display = "none";
+
+    }
+
+  }
+
+
+  loadMeals();
+  loadPayments();
+  loadMamaPayments();
+  loadMamaPaymentHistory();
+  loadDepositRequests();
+  loadFinancialSummary();
 
 }
 
 async function saveMeal(){
 
-const fromDate = document.getElementById("fromDate").value;
-const toDate = document.getElementById("toDate").value;
+  const fromDate = document.getElementById("fromDate").value;
+  const toDate = document.getElementById("toDate").value;
 
-if(fromDate === "" || toDate === ""){
-alert("তারিখ নির্বাচন করুন");
-return;
-}
+  if(fromDate === "" || toDate === ""){
+    alert("তারিখ নির্বাচন করুন");
+    return;
+  }
 
-// আজকের তারিখ
-const today = new Date();
+  // আজকের তারিখ
+  const today = new Date();
 
-const todayStr =
-today.getFullYear() + "-" +
-String(today.getMonth() + 1).padStart(2, "0") + "-" +
-String(today.getDate()).padStart(2, "0");
+  const todayStr =
+    today.getFullYear() + "-" +
+    String(today.getMonth() + 1).padStart(2, "0") + "-" +
+    String(today.getDate()).padStart(2, "0");
 
-// Member হলে আগের দিনের meal দেওয়া/পরিবর্তন করা যাবে না
-if(currentUser !== "Admin"){
 
-if(fromDate < todayStr || toDate < todayStr){  
+  // Member হলে আগের দিনের meal দেওয়া/পরিবর্তন করা যাবে না
+  if(currentUser !== "Admin"){
 
-  alert("Previous day meal cannot be changed!");  
-  return;  
+    if(fromDate < todayStr || toDate < todayStr){
 
-}
+      alert("Previous day meal cannot be changed!");
+      return;
 
-}
+    }
 
-const breakfast =
-parseInt(document.getElementById("breakfast").value) || 0;
+  }
 
-const lunch =
-parseInt(document.getElementById("lunch").value) || 0;
 
-const dinner =
-parseInt(document.getElementById("dinner").value) || 0;
+  const breakfast =
+    parseInt(document.getElementById("breakfast").value) || 0;
 
-const totalMeal =
-breakfast + lunch + dinner;
+  const lunch =
+    parseInt(document.getElementById("lunch").value) || 0;
 
-const totalCost =
-(breakfast * BREAKFAST_RATE) +
-(lunch * LUNCH_RATE) +
-(dinner * DINNER_RATE);
+  const dinner =
+    parseInt(document.getElementById("dinner").value) || 0;
 
-const start =
-new Date(fromDate + "T00:00:00");
 
-const end =
-new Date(toDate + "T00:00:00");
+  const totalMeal =
+    breakfast + lunch + dinner;
 
-// একাধিক দিনের জন্য
-for(
-let d = new Date(start);
-d <= end;
-d.setDate(d.getDate() + 1)
-){
 
-const date =  
-  d.getFullYear() + "-" +  
-  String(d.getMonth() + 1).padStart(2, "0") + "-" +  
-  String(d.getDate()).padStart(2, "0");  
+  const totalCost =
+    (breakfast * BREAKFAST_RATE) +
+    (lunch * LUNCH_RATE) +
+    (dinner * DINNER_RATE);
 
 
-// ==============================  
-// MEMBER MEAL TIME LIMIT  
-// ==============================  
+  const start =
+    new Date(fromDate + "T00:00:00");
 
-if(currentUser !== "Admin"){  
+  const end =
+    new Date(toDate + "T00:00:00");
 
-  // আগের দিনের meal একদম পরিবর্তন করা যাবে না  
-  if(date < todayStr){  
 
-    alert(  
-      date +  
-      " তারিখের meal পরিবর্তনের সময় শেষ!"  
-    );  
+  // একাধিক দিনের জন্য
+  for(
+    let d = new Date(start);
+    d <= end;
+    d.setDate(d.getDate() + 1)
+  ){
 
-    return;  
+    const date =
+      d.getFullYear() + "-" +
+      String(d.getMonth() + 1).padStart(2, "0") + "-" +
+      String(d.getDate()).padStart(2, "0");
 
-  }  
 
+    // ==============================
+    // MEMBER MEAL TIME LIMIT
+    // ==============================
 
-  // আজকের meal হলে সকাল ৯টার পর আর পরিবর্তন করা যাবে না  
-  if(date === todayStr){  
+    if(currentUser !== "Admin"){
 
-    const now = new Date();  
+      // আগের দিনের meal একদম পরিবর্তন করা যাবে না
+      if(date < todayStr){
 
-    const lockTime =  
-      new Date(date + "T12:00:00");  
+        alert(
+          date +
+          " তারিখের meal পরিবর্তনের সময় শেষ!"
+        );
 
+        return;
 
-    if(now >= lockTime){  
+      }
 
-      alert(  
-        date +  
-        " তারিখের meal পরিবর্তনের সময় সকাল ৯টায় শেষ হয়েছে!"  
-      );  
 
-      return;  
+      // আজকের meal হলে সকাল ৯টার পর আর পরিবর্তন করা যাবে না
+      if(date === todayStr){
 
-    }  
+        const now = new Date();
 
-  }  
+        const lockTime =
+          new Date(date + "T12:00:00");
 
-}  
 
+        if(now >= lockTime){
 
-const mealRef =  
-  db.collection("meals")  
-    .doc(currentUser + "_" + date);  
+          alert(
+            date +
+            " তারিখের meal পরিবর্তনের সময় সকাল ৯টায় শেষ হয়েছে!"
+          );
 
+          return;
 
-const existingMeal =  
-  await mealRef.get();  
+        }
 
+      }
 
-// আগে থেকে meal থাকলে তার createdAt রেখে দেওয়া হবে  
-let createdTime = Date.now();  
+    }
 
 
-if(existingMeal.exists){  
+    const mealRef =
+      db.collection("meals")
+        .doc(currentUser + "_" + date);
 
-  const oldData =  
-    existingMeal.data();  
 
+    const existingMeal =
+      await mealRef.get();
 
-  if(oldData.createdAt){  
 
-    createdTime =  
-      Number(oldData.createdAt);  
+    // আগে থেকে meal থাকলে তার createdAt রেখে দেওয়া হবে
+    let createdTime = Date.now();
 
-  }  
 
-}  
+    if(existingMeal.exists){
 
+      const oldData =
+        existingMeal.data();
 
-await mealRef.set({  
 
-  user: currentUser,  
+      if(oldData.createdAt){
 
-  date: date,  
+        createdTime =
+          Number(oldData.createdAt);
 
-  breakfast: breakfast,  
+      }
 
-  lunch: lunch,  
+    }
 
-  dinner: dinner,  
 
-  totalMeal: totalMeal,  
+    await mealRef.set({
 
-  totalCost: totalCost,  
+      user: currentUser,
 
-  createdAt: createdTime,  
+      date: date,
 
-  updatedAt: Date.now()  
+      breakfast: breakfast,
 
-});
+      lunch: lunch,
 
-}
+      dinner: dinner,
 
-alert("Meal Saved!");
+      totalMeal: totalMeal,
 
-loadFinancialSummary();
+      totalCost: totalCost,
+
+      createdAt: createdTime,
+
+      updatedAt: Date.now()
+
+    });
+
+  }
+
+
+  alert("Meal Saved!");
+
+  loadFinancialSummary();
 
 }
 
@@ -769,163 +821,178 @@ memberTotals[item.user] = 0;
 memberTotals[item.user] += item.totalCost;
 
 table.innerHTML += `
+<tr>
+<td>${item.date}</td>
+<td>${item.user}</td>
+<td>${item.breakfast}</td>
+<td>${item.lunch}</td>
+<td>${item.dinner}</td>
+<td>${item.totalMeal}</td>
+<td>৳ ${item.totalCost}</td>
+<td>
+${currentUser === "Admin" ? `
+<button onclick="deleteMeal('${doc.id}')" class="delete-btn">মুছুন</button>
+<button onclick="editMeal('${doc.id}')" class="edit-btn">এডিট</button>
+` : ""}
+</td>
+</tr>
+`;
 
-<tr>  
-<td>${item.date}</td>  
-<td>${item.user}</td>  
-<td>${item.breakfast}</td>  
-<td>${item.lunch}</td>  
-<td>${item.dinner}</td>  
-<td>${item.totalMeal}</td>  
-<td>৳ ${item.totalCost}</td>  
-<td>  
-${currentUser === "Admin" ? `  
-<button onclick="deleteMeal('${doc.id}')" class="delete-btn">মুছুন</button>  
-<button onclick="editMeal('${doc.id}')" class="edit-btn">এডিট</button>  
-` : ""}  
-</td>  
-</tr>  
-`;  });
+});
+
 
 // ADMIN MEAL DISPLAY
 if(currentUser === "Admin"){
 
-const now = new Date();
+  const now = new Date();
 
-// আজকের তারিখ
-const todayStr =
-now.getFullYear() + "-" +
-String(now.getMonth() + 1).padStart(2,"0") + "-" +
-String(now.getDate()).padStart(2,"0");
+  // আজকের তারিখ
+  const todayStr =
+    now.getFullYear() + "-" +
+    String(now.getMonth() + 1).padStart(2,"0") + "-" +
+    String(now.getDate()).padStart(2,"0");
 
-// ==================================
-// যে তারিখের মিল দেখানো হবে
-// ==================================
 
-let targetDate =
-localStorage.getItem("adminMealTargetDate");
+  // ==================================
+  // যে তারিখের মিল দেখানো হবে
+  // ==================================
 
-// প্রথমবার হলে আগামীকালের তারিখ
-if(!targetDate){
+  let targetDate =
+    localStorage.getItem("adminMealTargetDate");
 
-const tomorrow = new Date(now);  
 
-tomorrow.setDate(  
-  tomorrow.getDate() + 1  
-);  
+  // প্রথমবার হলে আগামীকালের তারিখ
+  if(!targetDate){
 
-targetDate =  
-  tomorrow.getFullYear() + "-" +  
-  String(tomorrow.getMonth() + 1).padStart(2,"0") + "-" +  
-  String(tomorrow.getDate()).padStart(2,"0");  
+    const tomorrow = new Date(now);
 
-localStorage.setItem(  
-  "adminMealTargetDate",  
-  targetDate  
-);
+    tomorrow.setDate(
+      tomorrow.getDate() + 1
+    );
 
-}
+    targetDate =
+      tomorrow.getFullYear() + "-" +
+      String(tomorrow.getMonth() + 1).padStart(2,"0") + "-" +
+      String(tomorrow.getDate()).padStart(2,"0");
 
-// ==================================
-// দুপুর ১টার পর হলে পরের দিনের
-// মিল দেখাবে
-// ==================================
+    localStorage.setItem(
+      "adminMealTargetDate",
+      targetDate
+    );
 
-const todayOnePM =
-new Date(
-now.getFullYear(),
-now.getMonth(),
-now.getDate(),
-13,
-0,
-0
-);
+  }
+  
 
-if(now >= todayOnePM){
 
-const target =
-new Date(targetDate + "T00:00:00");
+  // ==================================
+  // দুপুর ১টার পর হলে পরের দিনের
+  // মিল দেখাবে
+  // ==================================
 
-if(targetDate <= todayStr){
+  const todayOnePM =
+    new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      13,
+      0,
+      0
+    );
 
-target.setDate(  
-  target.getDate() + 1  
-);  
 
-targetDate =  
-  target.getFullYear() + "-" +  
-  String(target.getMonth() + 1).padStart(2,"0") + "-" +  
-  String(target.getDate()).padStart(2,"0");  
+  if(now >= todayOnePM){
 
-localStorage.setItem(  
-  "adminMealTargetDate",  
-  targetDate  
-);
+    const target =
+      new Date(targetDate + "T00:00:00");
 
-}
+    // যদি আজকের target হয়ে থাকে,
+    // তাহলে একদিন এগিয়ে যাবে
+    if(targetDate <= todayStr){
 
-}
+      target.setDate(
+        target.getDate() + 1
+      );
 
+      targetDate =
+        target.getFullYear() + "-" +
+        String(target.getMonth() + 1).padStart(2,"0") + "-" +
+        String(target.getDate()).padStart(2,"0");
+
+      localStorage.setItem(
+        "adminMealTargetDate",
+        targetDate
+      );
+
+    }
+
+  }
+  
 const dateParts = targetDate.split("-");
 
 const displayDate =
-dateParts[2] + "-" +
-dateParts[1] + "-" +
-dateParts[0];
+  dateParts[2] + "-" +
+  dateParts[1] + "-" +
+  dateParts[0];
 
 const adminMealDate =
-document.getElementById("adminMealDate");
+  document.getElementById("adminMealDate");
 
 if (adminMealDate) {
-adminMealDate.innerText =
-"📅 Meal Date: " + displayDate;
+  adminMealDate.innerText =
+    "📅 Meal Date: " + displayDate;
 
-adminMealDate.style.display = "block";
+  adminMealDate.style.display = "block";
 }
 
-// ==================================
-// Target date-এর meal count
-// ==================================
-
-let nextBreakfast = 0;
-let nextLunch = 0;
-let nextDinner = 0;
-
-snapshot.forEach((doc)=>{
-
-const item = doc.data();  
 
 
-if(item.date === targetDate){  
+  // ==================================
+  // Target date-এর meal count
+  // ==================================
 
-  nextBreakfast +=  
-    Number(item.breakfast || 0);  
+  let nextBreakfast = 0;
+  let nextLunch = 0;
+  let nextDinner = 0;
 
-  nextLunch +=  
-    Number(item.lunch || 0);  
 
-  nextDinner +=  
-    Number(item.dinner || 0);  
+  snapshot.forEach((doc)=>{
 
-}
+    const item = doc.data();
 
-});
 
-document.getElementById("totalBreakfast").innerText =
-nextBreakfast;
+    if(item.date === targetDate){
 
-document.getElementById("totalLunch").innerText =
-nextLunch;
+      nextBreakfast +=
+        Number(item.breakfast || 0);
 
-document.getElementById("totalDinner").innerText =
-nextDinner;
+      nextLunch +=
+        Number(item.lunch || 0);
 
-// মোট মিল ও মোট খরচ আগের মতো থাকবে
-document.getElementById("totalMeals").innerText =
-totalMeals;
+      nextDinner +=
+        Number(item.dinner || 0);
 
-document.getElementById("totalCost").innerText =
-totalCost;
+    }
+
+  });
+
+
+  document.getElementById("totalBreakfast").innerText =
+    nextBreakfast;
+
+  document.getElementById("totalLunch").innerText =
+    nextLunch;
+
+  document.getElementById("totalDinner").innerText =
+    nextDinner;
+
+
+  // মোট মিল ও মোট খরচ আগের মতো থাকবে
+  document.getElementById("totalMeals").innerText =
+    totalMeals;
+
+  document.getElementById("totalCost").innerText =
+    totalCost;
+
 
 }else{
 
@@ -938,6 +1005,7 @@ document.getElementById("totalCost").innerText = totalCost;
 
 }
 
+
 if(currentUser === "Admin"){
 
 let memberHtml = "";
@@ -945,12 +1013,13 @@ let memberHtml = "";
 Object.keys(memberTotals).forEach(member=>{
 
 memberHtml += `
+<div class="member-item">
+<span>${member}</span>
+<span>৳ ${memberTotals[member]}</span>
+</div>
+`;
 
-<div class="member-item">  
-<span>${member}</span>  
-<span>৳ ${memberTotals[member]}</span>  
-</div>  
-`;  });
+});
 
 document.getElementById("memberCostList").innerHTML = memberHtml;
 document.getElementById("grandTotalCost").innerText = totalCost;
@@ -991,6 +1060,7 @@ localStorage.removeItem("loggedUser");
 location.reload();
 
 }
+
 
 async function savePayment(){
 
@@ -1046,6 +1116,7 @@ document.getElementById("usedCost").innerText = usedCost;
 document.getElementById("currentBalance").innerText = totalDeposit - usedCost;
 
 }
+
 
 async function saveMamaPayment(){
 
@@ -1106,6 +1177,7 @@ document.getElementById("remainingAliVaiBalance").innerText = totalMama - mealCo
 
 }
 
+
 async function loadDepositRequests(){
 
 const panel = document.getElementById("adminDepositPanel");
@@ -1134,24 +1206,25 @@ snapshot.forEach((doc)=>{
 const item = doc.data();
 
 table.innerHTML += `
+<tr>
+<td>${item.user}</td>
+<td>${item.date}</td>
+<td>৳ ${item.amount}</td>
+<td class="${item.status === "accepted" ? "accepted" : "pending"}">
+${item.status}
+</td>
+<td>
+${item.status !== "accepted"
+? `
+<button onclick="acceptDeposit('${doc.id}')" class="accept-btn">গ্রহণ</button>
+<button onclick="declineDeposit('${doc.id}')" class="decline-btn">বাতিল</button>
+`
+: "Done"}
+</td>
+</tr>
+`;
 
-<tr>  
-<td>${item.user}</td>  
-<td>${item.date}</td>  
-<td>৳ ${item.amount}</td>  
-<td class="${item.status === "accepted" ? "accepted" : "pending"}">  
-${item.status}  
-</td>  
-<td>  
-${item.status !== "accepted"  
-? `  
-<button onclick="acceptDeposit('${doc.id}')" class="accept-btn">গ্রহণ</button>  
-<button onclick="declineDeposit('${doc.id}')" class="decline-btn">বাতিল</button>  
-`  
-: "Done"}  
-</td>  
-</tr>  
-`;  });
+});
 
 }
 
@@ -1170,146 +1243,156 @@ loadFinancialSummary();
 
 }
 
+
 async function loadFinancialSummary(){
 
-if(currentUser !== "Admin"){
-return;
+  if(currentUser !== "Admin"){
+    return;
+  }
+
+  const memberCostList =
+    document.getElementById("memberCostList");
+
+  const paymentsSnapshot =
+    await db.collection("payments").get();
+
+  const mealsSnapshot =
+    await db.collection("meals").get();
+
+  const membersSnapshot =
+    await db.collection("members").get();
+
+
+  const deposits = {};
+  const costs = {};
+  const openingBalances = {};
+
+
+  /* =========================
+     MEMBER OPENING BALANCE
+  ========================= */
+
+  membersSnapshot.forEach((doc)=>{
+
+    const item = doc.data();
+
+    openingBalances[item.name] =
+      Number(item.openingBalance || 0);
+
+  });
+
+
+  /* =========================
+     DEPOSIT
+  ========================= */
+
+  paymentsSnapshot.forEach((doc)=>{
+
+    const item = doc.data();
+
+    if(item.status === "accepted"){
+
+      if(!deposits[item.user]){
+        deposits[item.user] = 0;
+      }
+
+      deposits[item.user] +=
+        Number(item.amount || 0);
+
+    }
+
+  });
+
+
+  /* =========================
+     MEAL COST
+  ========================= */
+
+  mealsSnapshot.forEach((doc)=>{
+
+    const item = doc.data();
+
+    if(!costs[item.user]){
+      costs[item.user] = 0;
+    }
+
+    costs[item.user] +=
+      Number(item.totalCost || 0);
+
+  });
+
+
+  /* =========================
+     USERS
+  ========================= */
+
+  const users = new Set([
+    ...Object.keys(deposits),
+    ...Object.keys(costs),
+    ...Object.keys(openingBalances)
+  ]);
+
+
+  let html = "";
+
+
+  users.forEach((user)=>{
+
+    const opening =
+      openingBalances[user] || 0;
+
+    const deposit =
+      deposits[user] || 0;
+
+    const cost =
+      costs[user] || 0;
+
+
+    /*
+      নতুন Balance:
+
+      আগের মাসের Balance
+      + নতুন Deposit
+      - নতুন Meal Cost
+    */
+
+    const balance =
+      opening + deposit - cost;
+
+
+    html += `
+      <div class="member-item">
+
+        <div>
+
+          <strong>${user}</strong><br>
+
+          Previous Balance:
+          ৳ ${opening}<br>
+
+          Deposit:
+          ৳ ${deposit}<br>
+
+          Meal Cost:
+          ৳ ${cost}<br>
+
+          <strong>
+            Balance:
+            ৳ ${balance}
+          </strong>
+
+        </div>
+
+      </div>
+    `;
+
+  });
+
+
+  memberCostList.innerHTML = html;
+
 }
 
-const memberCostList =
-document.getElementById("memberCostList");
-
-const paymentsSnapshot =
-await db.collection("payments").get();
-
-const mealsSnapshot =
-await db.collection("meals").get();
-
-const membersSnapshot =
-await db.collection("members").get();
-
-const deposits = {};
-const costs = {};
-const openingBalances = {};
-
-/* =========================
-MEMBER OPENING BALANCE
-========================= */
-
-membersSnapshot.forEach((doc)=>{
-
-const item = doc.data();  
-
-openingBalances[item.name] =  
-  Number(item.openingBalance || 0);
-
-});
-
-/* =========================
-DEPOSIT
-========================= */
-
-paymentsSnapshot.forEach((doc)=>{
-
-const item = doc.data();  
-
-if(item.status === "accepted"){  
-
-  if(!deposits[item.user]){  
-    deposits[item.user] = 0;  
-  }  
-
-  deposits[item.user] +=  
-    Number(item.amount || 0);  
-
-}
-
-});
-
-/* =========================
-MEAL COST
-========================= */
-
-mealsSnapshot.forEach((doc)=>{
-
-const item = doc.data();  
-
-if(!costs[item.user]){  
-  costs[item.user] = 0;  
-}  
-
-costs[item.user] +=  
-  Number(item.totalCost || 0);
-
-});
-
-/* =========================
-USERS
-========================= */
-
-const users = new Set([
-...Object.keys(deposits),
-...Object.keys(costs),
-...Object.keys(openingBalances)
-]);
-
-let html = "";
-
-users.forEach((user)=>{
-
-const opening =  
-  openingBalances[user] || 0;  
-
-const deposit =  
-  deposits[user] || 0;  
-
-const cost =  
-  costs[user] || 0;  
-
-
-/*  
-  নতুন Balance:  
-
-  আগের মাসের Balance  
-  + নতুন Deposit  
-  - নতুন Meal Cost  
-*/  
-
-const balance =  
-  opening + deposit - cost;  
-
-
-html += `  
-  <div class="member-item">  
-
-    <div>  
-
-      <strong>${user}</strong><br>  
-
-      Previous Balance:  
-      ৳ ${opening}<br>  
-
-      Deposit:  
-      ৳ ${deposit}<br>  
-
-      Meal Cost:  
-      ৳ ${cost}<br>  
-
-      <strong>  
-        Balance:  
-        ৳ ${balance}  
-      </strong>  
-
-    </div>  
-
-  </div>  
-`;
-
-});
-
-memberCostList.innerHTML = html;
-
-}
 
 function toggleNotice(){
 
@@ -1356,13 +1439,13 @@ document.getElementById("cancelClearBtn").style.display="block";
 
 const box=document.getElementById("countdownBox");
 
-box.innerText=${time} সেকেন্ড পরে Confirm আসবে;
+box.innerText=`${time} সেকেন্ড পরে Confirm আসবে`;
 
 clearIntervalId=setInterval(()=>{
 
 time--;
 
-box.innerText=${time} সেকেন্ড পরে Confirm আসবে;
+box.innerText=`${time} সেকেন্ড পরে Confirm আসবে`;
 
 if(time<=0){
 
@@ -1398,241 +1481,255 @@ document.getElementById("cancelClearBtn").style.display="none";
 
 async function clearAllMonthlyData(){
 
-if(currentUser !== "Admin"){
-alert("শুধু Admin মাসের হিসাব ক্লিয়ার করতে পারবে!");
-return;
-}
+  if(currentUser !== "Admin"){
+    alert("শুধু Admin মাসের হিসাব ক্লিয়ার করতে পারবে!");
+    return;
+  }
 
-const collections = [
-"meals",
-"payments",
-"mamaPayments"
-];
+  const collections = [
+    "meals",
+    "payments",
+    "mamaPayments"
+  ];
 
-const now = new Date();
+  const now = new Date();
 
-const year = now.getFullYear();
+  const year = now.getFullYear();
 
-const month =
-String(now.getMonth() + 1).padStart(2,"0");
+  const month =
+    String(now.getMonth() + 1).padStart(2,"0");
 
-const monthKey =
-year + "-" + month;
-
-/* =========================
-CREATE ARCHIVE
-========================= */
-
-await db.collection("monthlyArchives")
-.doc(monthKey)
-.set({
-month: monthKey,
-createdAt: new Date().toISOString()
-});
-
-/* =========================
-ARCHIVE CURRENT MONTH
-========================= */
-
-for(const col of collections){
-
-const snap =  
-  await db.collection(col).get();  
-
-for(const docItem of snap.docs){  
-
-  const data =  
-    docItem.data();  
-
-  if(  
-    data.date &&  
-    typeof data.date === "string" &&  
-    data.date.startsWith(monthKey)  
-  ){  
-
-    await db.collection("monthlyArchives")  
-      .doc(monthKey)  
-      .collection(col)  
-      .doc(docItem.id)  
-      .set(data);  
-
-    await db.collection(col)  
-      .doc(docItem.id)  
-      .delete();  
-  }  
-
-}
-
-}
-
-/* =========================
-CALCULATE FINAL BALANCE
-BEFORE STARTING NEW MONTH
-========================= */
-
-const archiveMealSnap =
-await db.collection("monthlyArchives")
-.doc(monthKey)
-.collection("meals")
-.get();
-
-const archivePaymentSnap =
-await db.collection("monthlyArchives")
-.doc(monthKey)
-.collection("payments")
-.get();
-
-const memberData = {};
-
-/* =========================
-MEAL COST
-========================= */
-
-archiveMealSnap.forEach((doc)=>{
-
-const data =  
-  doc.data();  
-
-if(!data.user){  
-  return;  
-}  
-
-if(!memberData[data.user]){  
-  memberData[data.user] = {  
-    deposit: 0,  
-    mealCost: 0  
-  };  
-}  
-
-memberData[data.user].mealCost +=  
-  Number(data.totalCost || 0);
-
-});
-
-/* =========================
-ACCEPTED DEPOSIT
-========================= */
-
-archivePaymentSnap.forEach((doc)=>{
-
-const data =  
-  doc.data();  
-
-if(  
-  data.user &&  
-  data.status === "accepted"  
-){  
-
-  if(!memberData[data.user]){  
-    memberData[data.user] = {  
-      deposit: 0,  
-      mealCost: 0  
-    };  
-  }  
-
-  memberData[data.user].deposit +=  
-    Number(data.amount || 0);  
-
-}
-
-});
-
-/* =========================
-SAVE OPENING BALANCE
-========================= */
-
-for(const user in memberData){
-
-const deposit =  
-  memberData[user].deposit;  
-
-const mealCost =  
-  memberData[user].mealCost;  
-
-const balance =  
-  deposit - mealCost;  
+  const monthKey =
+    year + "-" + month;
 
 
-await db.collection("members")  
-  .doc(user)  
-  .set({  
+  /* =========================
+     CREATE ARCHIVE
+  ========================= */
 
-    openingBalance: balance,  
+  await db.collection("monthlyArchives")
+    .doc(monthKey)
+    .set({
+      month: monthKey,
+      createdAt: new Date().toISOString()
+    });
 
-    openingBalanceMonth: monthKey  
 
-  },{  
+  /* =========================
+     ARCHIVE CURRENT MONTH
+  ========================= */
 
-    merge: true  
+  for(const col of collections){
+
+    const snap =
+      await db.collection(col).get();
+
+    for(const docItem of snap.docs){
+
+      const data =
+        docItem.data();
+
+      if(
+        data.date &&
+        typeof data.date === "string" &&
+        data.date.startsWith(monthKey)
+      ){
+
+        await db.collection("monthlyArchives")
+          .doc(monthKey)
+          .collection(col)
+          .doc(docItem.id)
+          .set(data);
+
+        await db.collection(col)
+          .doc(docItem.id)
+          .delete();
+      }
+
+    }
+
+  }
+
+
+  /* =========================
+     CALCULATE FINAL BALANCE
+     BEFORE STARTING NEW MONTH
+  ========================= */
+
+  const archiveMealSnap =
+    await db.collection("monthlyArchives")
+      .doc(monthKey)
+      .collection("meals")
+      .get();
+
+  const archivePaymentSnap =
+    await db.collection("monthlyArchives")
+      .doc(monthKey)
+      .collection("payments")
+      .get();
+
+
+  const memberData = {};
+
+
+  /* =========================
+     MEAL COST
+  ========================= */
+
+  archiveMealSnap.forEach((doc)=>{
+
+    const data =
+      doc.data();
+
+    if(!data.user){
+      return;
+    }
+
+    if(!memberData[data.user]){
+      memberData[data.user] = {
+        deposit: 0,
+        mealCost: 0
+      };
+    }
+
+    memberData[data.user].mealCost +=
+      Number(data.totalCost || 0);
 
   });
 
+
+  /* =========================
+     ACCEPTED DEPOSIT
+  ========================= */
+
+  archivePaymentSnap.forEach((doc)=>{
+
+    const data =
+      doc.data();
+
+    if(
+      data.user &&
+      data.status === "accepted"
+    ){
+
+      if(!memberData[data.user]){
+        memberData[data.user] = {
+          deposit: 0,
+          mealCost: 0
+        };
+      }
+
+      memberData[data.user].deposit +=
+        Number(data.amount || 0);
+
+    }
+
+  });
+
+
+  /* =========================
+     SAVE OPENING BALANCE
+  ========================= */
+
+  for(const user in memberData){
+
+    const deposit =
+      memberData[user].deposit;
+
+    const mealCost =
+      memberData[user].mealCost;
+
+    const balance =
+      deposit - mealCost;
+
+
+    await db.collection("members")
+      .doc(user)
+      .set({
+
+        openingBalance: balance,
+
+        openingBalanceMonth: monthKey
+
+      },{
+
+        merge: true
+
+      });
+
+  }
+
+
+  /* =========================
+     KEEP ONLY 6 ARCHIVES
+  ========================= */
+
+  const archiveSnap =
+    await db.collection("monthlyArchives")
+      .orderBy("month","desc")
+      .get();
+
+
+  const archiveMonths =
+    archiveSnap.docs;
+
+
+  for(
+    let i = 6;
+    i < archiveMonths.length;
+    i++
+  ){
+
+    const oldMonth =
+      archiveMonths[i].id;
+
+    const oldArchiveRef =
+      db.collection("monthlyArchives")
+        .doc(oldMonth);
+
+
+    const subCollections = [
+      "meals",
+      "payments",
+      "mamaPayments"
+    ];
+
+
+    for(const subCol of subCollections){
+
+      const oldSnap =
+        await oldArchiveRef
+          .collection(subCol)
+          .get();
+
+
+      for(const oldDoc of oldSnap.docs){
+
+        await oldArchiveRef
+          .collection(subCol)
+          .doc(oldDoc.id)
+          .delete();
+
+      }
+
+    }
+
+    await oldArchiveRef.delete();
+
+  }
+
+
+  alert(
+    "এই মাসের হিসাব Archive হয়েছে।\n\n" +
+    "আগের মাসের Balance পরের মাসে চলে যাবে।"
+  );
+
+  location.reload();
+
 }
 
-/* =========================
-KEEP ONLY 6 ARCHIVES
-========================= */
-
-const archiveSnap =
-await db.collection("monthlyArchives")
-.orderBy("month","desc")
-.get();
-
-const archiveMonths =
-archiveSnap.docs;
-
-for(
-let i = 6;
-i < archiveMonths.length;
-i++
-){
-
-const oldMonth =  
-  archiveMonths[i].id;  
-
-const oldArchiveRef =  
-  db.collection("monthlyArchives")  
-    .doc(oldMonth);  
 
 
-const subCollections = [  
-  "meals",  
-  "payments",  
-  "mamaPayments"  
-];  
-
-
-for(const subCol of subCollections){  
-
-  const oldSnap =  
-    await oldArchiveRef  
-      .collection(subCol)  
-      .get();  
-
-
-  for(const oldDoc of oldSnap.docs){  
-
-    await oldArchiveRef  
-      .collection(subCol)  
-      .doc(oldDoc.id)  
-      .delete();  
-
-  }  
-
-}  
-
-await oldArchiveRef.delete();
-
-}
-
-alert(
-"এই মাসের হিসাব Archive হয়েছে।\n\n" +
-"আগের মাসের Balance পরের মাসে চলে যাবে।"
-);
-
-location.reload();
-
-}
 
 setTimeout(()=>{
 
@@ -1647,6 +1744,7 @@ panel.style.display="block";
 }
 
 },1000);
+
 
 async function loadMamaPaymentHistory(){
 
@@ -1666,20 +1764,27 @@ const data=doc.data();
 
 box.innerHTML += `
 
-<div class="mama-history-item">  <div style="  
-display:flex;  
-justify-content:space-between;  
-align-items:center;  
-gap:8px;  
-">  <div>  
-📅 তারিখ: ${data.date || "N/A"}  
-</div>  ${currentUser === "Admin" ? `
+<div class="mama-history-item">
 
-<div style="  
-display:flex;  
-gap:5px;  
-flex-shrink:0;  
-">  <button
+<div style="
+display:flex;
+justify-content:space-between;
+align-items:center;
+gap:8px;
+">
+
+<div>
+📅 তারিখ: ${data.date || "N/A"}
+</div>
+
+${currentUser === "Admin" ? `
+<div style="
+display:flex;
+gap:5px;
+flex-shrink:0;
+">
+
+<button
 onclick="editAliVaiPayment('${doc.id}')"
 style="
 width:auto;
@@ -1688,9 +1793,7 @@ font-size:12px;
 border:none;
 border-radius:6px;
 "
-
-> 
-
+>
 ✏️
 </button>
 
@@ -1703,20 +1806,27 @@ font-size:12px;
 border:none;
 border-radius:6px;
 "
-
-> 
-
+>
 🗑️
 </button>
 
-</div>  
-` : ""}  </div>  <div style="margin-top:8px;">  
-💰 টাকা: ৳ ${data.amount || 0}  
-</div>  </div>  `;
+</div>
+` : ""}
+
+</div>
+
+<div style="margin-top:8px;">
+💰 টাকা: ৳ ${data.amount || 0}
+</div>
+
+</div>
+
+`;
 
 });
 
 }
+
 
 function toggleNextMeals(){
 
@@ -1761,17 +1871,20 @@ const data=doc.data();
 
 list.innerHTML += `
 
-<div class="nextMealItem">  
-👤 ${data.user}<br>  
-🌅 সকাল: ${data.breakfast || 0}<br>  
-☀️ দুপুর: ${data.lunch || 0}<br>  
-🌙 রাত: ${data.dinner || 0}<br>  
-📅 ${data.date}  
-</div>  `;
+<div class="nextMealItem">
+👤 ${data.user}<br>
+🌅 সকাল: ${data.breakfast || 0}<br>
+☀️ দুপুর: ${data.lunch || 0}<br>
+🌙 রাত: ${data.dinner || 0}<br>
+📅 ${data.date}
+</div>
+
+`;
 
 });
 
 }
+
 
 async function editMeal(id){
 
@@ -1796,6 +1909,7 @@ location.reload();
 
 }
 
+
 // MEMBER PAYMENT DROPDOWN FIX
 setTimeout(()=>{
 
@@ -1803,11 +1917,13 @@ const paymentSelect = document.getElementById("paymentMember");
 
 if(paymentSelect && currentUser !== "Admin"){
 
-paymentSelect.innerHTML = <option value="${currentUser}">${currentUser}</option>;
+paymentSelect.innerHTML = `<option value="${currentUser}">${currentUser}</option>`;
 
 }
 
 },500);
+
+
 
 async function declineDeposit(id){
 
@@ -1824,6 +1940,9 @@ alert("Deposit বাতিলd!");
 loadDepositRequests();
 
 }
+
+
+
 
 async function editAliVaiPayment(id){
 
@@ -1863,6 +1982,8 @@ loadMamaPayments();
 
 }
 
+
+
 async function openMealFullscreen(){
 
 const modal = document.getElementById("mealFullscreenModal");
@@ -1898,50 +2019,54 @@ d:item.dinner || 0
 users.sort();
 
 let html = `
+<div style="overflow:auto;width:100%;height:90vh">
+<table border="1" style="border-collapse:collapse;width:max-content;min-width:100%;text-align:center;">
+<thead>
+<tr>
+<th rowspan="2">তারিখ</th>
+`;
 
-<div style="overflow:auto;width:100%;height:90vh">  
-<table border="1" style="border-collapse:collapse;width:max-content;min-width:100%;text-align:center;">  
-<thead>  
-<tr>  
-<th rowspan="2">তারিখ</th>  
-`;  users.forEach(user=>{
-html += <th colspan="3">${user}</th>;
+users.forEach(user=>{
+html += `<th colspan="3">${user}</th>`;
 });
-html += <th colspan="3">মোট</th>;
+    html += `<th colspan="3">মোট</th>`;
 
-html += </tr><tr>;
+html += `</tr><tr>`;
 
 users.forEach(()=>{
 html += `
+<th>🌅</th>
+<th>☀️</th>
+<th>🌙</th>
+`;
+});
+    html += `
+<th>🌅</th>
+<th>☀️</th>
+<th>🌙</th>
+`;
 
-<th>🌅</th>  
-<th>☀️</th>  
-<th>🌙</th>  
-`;  
-});  
-    html += `  
-<th>🌅</th>  
-<th>☀️</th>  
-<th>🌙</th>  
-`;  html += </tr></thead><tbody>;
+html += `</tr></thead><tbody>`;
 
 for(let d=1; d<=31; d++){
 
 const day = String(d).padStart(2,"0");
 
-html += <tr><td><b>${day}</b></td>;
+html += `<tr><td><b>${day}</b></td>`;
+    
 
 users.forEach(user=>{
 
 const meal = mealMap[day]?.[user];
 
 html += `
+<td>${meal ? meal.b : ""}</td>
+<td>${meal ? meal.l : ""}</td>
+<td>${meal ? meal.d : ""}</td>
+`;
 
-<td>${meal ? meal.b : ""}</td>  
-<td>${meal ? meal.l : ""}</td>  
-<td>${meal ? meal.d : ""}</td>  
-`;  });
-let dayB = 0;
+});
+    let dayB = 0;
 let dayL = 0;
 let dayD = 0;
 
@@ -1958,15 +2083,17 @@ dayD += Number(meal.d || 0);
 });
 
 html += `
+<td><b>${dayB}</b></td>
+<td><b>${dayL}</b></td>
+<td><b>${dayD}</b></td>
+`;
 
-<td><b>${dayB}</b></td>  
-<td><b>${dayL}</b></td>  
-<td><b>${dayD}</b></td>  
-`;  html += </tr>;
+html += `</tr>`;
 }
-html += `<tr style="background:#374151;color:white;font-weight:bold;">
+    html += `<tr style="background:#374151;color:white;font-weight:bold;">
+<td>T</td>`;
 
-<td>T</td>`;  users.forEach(user=>{
+users.forEach(user=>{
 
 let totalB = 0;
 let totalL = 0;
@@ -1986,12 +2113,13 @@ totalD += Number(meal.d || 0);
 }
 
 html += `
+<td>${totalB}</td>
+<td>${totalL}</td>
+<td>${totalD}</td>
+`;
 
-<td>${totalB}</td>  
-<td>${totalL}</td>  
-<td>${totalD}</td>  
-`;  });
-let grandB = 0;
+});
+    let grandB = 0;
 let grandL = 0;
 let grandD = 0;
 
@@ -2013,14 +2141,16 @@ grandD += Number(meal.d || 0);
 });
 
 html += `
+<td><b>${grandB}</b></td>
+<td><b>${grandL}</b></td>
+<td><b>${grandD}</b></td>
+`;
 
-<td><b>${grandB}</b></td>  
-<td><b>${grandL}</b></td>  
-<td><b>${grandD}</b></td>  
-`;  html += </tr>;
-html += `<tr style="background:#374151;color:#00ff88;font-weight:bold;">
+html += `</tr>`;
+    html += `<tr style="background:#374151;color:#00ff88;font-weight:bold;">
+<td>৳</td>`;
 
-<td>৳</td>`;  users.forEach(user=>{
+users.forEach(user=>{
 
 let totalCost = 0;
 
@@ -2041,10 +2171,11 @@ totalCost +=
 }
 
 html += `
+<td colspan="3">৳ ${totalCost}</td>
+`;
 
-<td colspan="3">৳ ${totalCost}</td>  
-`;  });
-let grandCost = 0;
+});
+    let grandCost = 0;
 
 users.forEach(user=>{
 
@@ -2067,12 +2198,14 @@ grandCost +=
 });
 
 html += `
+<td colspan="3"><b>৳ ${grandCost}</b></td>
+`;
 
-<td colspan="3"><b>৳ ${grandCost}</b></td>  
-`;  html += </tr>;
-html += `<tr style="background:#1f2937;color:#00e676;font-weight:bold;">
+html += `</tr>`;
+    html += `<tr style="background:#1f2937;color:#00e676;font-weight:bold;">
+<td>জমা</td>`;
 
-<td>জমা</td>`;  const paymentSnap = await db.collection("payments").get();
+const paymentSnap = await db.collection("payments").get();
 
 users.forEach(user=>{
 
@@ -2088,15 +2221,16 @@ totalDeposit += Number(pay.amount || 0);
 
 });
 
-html += <td colspan="3">৳ ${totalDeposit}</td>;
+html += `<td colspan="3">৳ ${totalDeposit}</td>`;
 
 });
 
-html += <td colspan="3">-</td>;
-html += </tr>;
-html += `<tr style="background:#0f172a;color:#38bdf8;font-weight:bold;">
+html += `<td colspan="3">-</td>`;
+html += `</tr>`;
+    html += `<tr style="background:#0f172a;color:#38bdf8;font-weight:bold;">
+<td>ব্যালেন্স</td>`;
 
-<td>ব্যালেন্স</td>`;  const paymentSnap2 = await db.collection("payments").get();
+const paymentSnap2 = await db.collection("payments").get();
 
 users.forEach(user=>{
 
@@ -2129,14 +2263,14 @@ totalCost +=
 
 }
 
-html += <td colspan="3">৳ ${totalDeposit - totalCost}</td>;
+html += `<td colspan="3">৳ ${totalDeposit - totalCost}</td>`;
 
 });
 
-html += <td colspan="3">-</td>;
-html += </tr>;
+html += `<td colspan="3">-</td>`;
+html += `</tr>`;
 
-html += </tbody></table></div>;
+html += `</tbody></table></div>`;
 
 content.innerHTML = html;
 modal.style.display = "block";
@@ -2147,6 +2281,7 @@ function closeMealFullscreen(){
 const modal=document.getElementById("mealFullscreenModal");
 if(modal) modal.style.display="none";
 }
+
 
 async function openMonthlyMealSheet(){
 alert("মাসিক মিল শিট ভিউ পরবর্তী আপডেটে যোগ করা হয়েছে।");
@@ -2175,27 +2310,28 @@ const printWindow =
 window.open("","","width=1200,height=800");
 
 printWindow.document.write(`
+<html>
+<head>
+<title>Meal Sheet</title>
+<style>
+table{
+border-collapse:collapse;
+width:100%;
+}
+th,td{
+border:1px solid black;
+padding:4px;
+text-align:center;
+}
+</style>
+</head>
+<body>
+${content}
+</body>
+</html>
+`);
 
-<html>  
-<head>  
-<title>Meal Sheet</title>  
-<style>  
-table{  
-border-collapse:collapse;  
-width:100%;  
-}  
-th,td{  
-border:1px solid black;  
-padding:4px;  
-text-align:center;  
-}  
-</style>  
-</head>  
-<body>  
-${content}  
-</body>  
-</html>  
-`);  printWindow.document.close();
+printWindow.document.close();
 printWindow.print();
 
 }
@@ -2211,9 +2347,9 @@ const token = await messaging.getToken({
 vapidKey: "BJD_AlGwhbfdqfgMJAi1wtETt5XAC_ab5Pz2cMx1Y8Y0tAPuN-pgW0250ab4xjMkGrEFlfHpazgZLxWEw4sURLw"
 });
 db.collection("fcmTokens").doc(currentUser).set({
-token: token,
-user: currentUser,
-updatedAt: new Date().toISOString()
+    token: token,
+    user: currentUser,
+    updatedAt: new Date().toISOString()
 });
 
 console.log("FCM Token:", token);
@@ -2225,756 +2361,824 @@ console.log("FCM Token:", token);
 enableNotification();
 async function loadMonthlyArchives(){
 
-const box =
-document.getElementById("monthlyArchiveList");
+  const box =
+    document.getElementById("monthlyArchiveList");
 
-if(!box){
-return;
-}
+  if(!box){
+    return;
+  }
 
-box.innerHTML = "লোড হচ্ছে...";
+  box.innerHTML = "লোড হচ্ছে...";
 
-const snap =
-await db.collection("monthlyArchives")
-.orderBy("month","desc")
-.get();
+  const snap =
+    await db.collection("monthlyArchives")
+      .orderBy("month","desc")
+      .get();
 
-if(snap.empty){
+  if(snap.empty){
 
-box.innerHTML =  
-  "<div>কোনো পুরোনো মাসের হিসাব নেই</div>";  
+    box.innerHTML =
+      "<div>কোনো পুরোনো মাসের হিসাব নেই</div>";
 
-return;
+    return;
+  }
 
-}
+  box.innerHTML = "";
 
-box.innerHTML = "";
+  snap.forEach((doc)=>{
 
-snap.forEach((doc)=>{
+    const data = doc.data();
 
-const data = doc.data();  
+    const month = data.month;
 
-const month = data.month;  
+    box.innerHTML += `
 
-box.innerHTML += `  
+      <div
+        style="
+          display:flex;
+          justify-content:space-between;
+          align-items:center;
+          padding:10px;
+          margin-bottom:8px;
+          background:#f5f5f5;
+          border-radius:8px;
+        "
+      >
 
-  <div  
-    style="  
-      display:flex;  
-      justify-content:space-between;  
-      align-items:center;  
-      padding:10px;  
-      margin-bottom:8px;  
-      background:#f5f5f5;  
-      border-radius:8px;  
-    "  
-  >  
+        <strong>
+          📅 ${month}
+        </strong>
 
-    <strong>  
-      📅 ${month}  
-    </strong>  
+        <button
+          onclick="openArchivedMonth('${month}')"
+          style="
+            width:auto;
+            padding:6px 10px;
+            font-size:12px;
+          "
+        >
+          📊 Full Screen
+        </button>
 
-    <button  
-      onclick="openArchivedMonth('${month}')"  
-      style="  
-        width:auto;  
-        padding:6px 10px;  
-        font-size:12px;  
-      "  
-    >  
-      📊 Full Screen  
-    </button>  
+      </div>
 
-  </div>  
+    `;
 
-`;
-
-});
+  });
 
 }
 
 async function openArchivedMonth(monthKey){
 
-const modal =
-document.getElementById("mealFullscreenModal");
+  const modal =
+    document.getElementById("mealFullscreenModal");
 
-const content =
-document.getElementById("mealFullscreenContent");
+  const content =
+    document.getElementById("mealFullscreenContent");
 
-if(!modal || !content){
-return;
-}
+  if(!modal || !content){
+    return;
+  }
 
-content.innerHTML =
-"<div style='padding:20px;text-align:center;'>লোড হচ্ছে...</div>";
+  content.innerHTML =
+    "<div style='padding:20px;text-align:center;'>লোড হচ্ছে...</div>";
 
-modal.style.display = "block";
+  modal.style.display = "block";
 
-/* =========================
-ARCHIVED MEALS
-========================= */
+  /* =========================
+     ARCHIVED MEALS
+  ========================= */
 
-const mealSnap =
-await db.collection("monthlyArchives")
-.doc(monthKey)
-.collection("meals")
-.get();
+  const mealSnap =
+    await db.collection("monthlyArchives")
+      .doc(monthKey)
+      .collection("meals")
+      .get();
 
-const meals = {};
-const users = new Set();
+  const meals = {};
+  const users = new Set();
 
-mealSnap.forEach((doc)=>{
-const item = doc.data();
+  mealSnap.forEach((doc)=>{
+    const item = doc.data();
 
-if(!item.date || !item.user){  
-  return;  
-}  
+    if(!item.date || !item.user){
+      return;
+    }
 
-const day =  
-  parseInt(item.date.split("-")[2]);  
+    const day =
+      parseInt(item.date.split("-")[2]);
 
-if(!meals[day]){  
-  meals[day] = {};  
-}  
+    if(!meals[day]){
+      meals[day] = {};
+    }
 
-meals[day][item.user] = {  
-  b: Number(item.breakfast || 0),  
-  l: Number(item.lunch || 0),  
-  d: Number(item.dinner || 0)  
-};  
+    meals[day][item.user] = {
+      b: Number(item.breakfast || 0),
+      l: Number(item.lunch || 0),
+      d: Number(item.dinner || 0)
+    };
 
-users.add(item.user);
+    users.add(item.user);
+  });
 
-});
 
-/* =========================
-ARCHIVED MEMBER PAYMENTS
-========================= */
+  /* =========================
+     ARCHIVED MEMBER PAYMENTS
+  ========================= */
 
-const paymentSnap =
-await db.collection("monthlyArchives")
-.doc(monthKey)
-.collection("payments")
-.get();
+  const paymentSnap =
+    await db.collection("monthlyArchives")
+      .doc(monthKey)
+      .collection("payments")
+      .get();
 
-const deposits = {};
+  const deposits = {};
 
-paymentSnap.forEach((doc)=>{
-const item = doc.data();
+  paymentSnap.forEach((doc)=>{
+    const item = doc.data();
 
-if(item.status === "accepted" && item.user){  
+    if(item.status === "accepted" && item.user){
 
-  if(!deposits[item.user]){  
-    deposits[item.user] = 0;  
-  }  
+      if(!deposits[item.user]){
+        deposits[item.user] = 0;
+      }
 
-  deposits[item.user] +=  
-    Number(item.amount || 0);  
+      deposits[item.user] +=
+        Number(item.amount || 0);
 
-  users.add(item.user);  
-}
+      users.add(item.user);
+    }
+  });
 
-});
 
-/* =========================
-ARCHIVED ALI VAI PAYMENTS
-========================= */
+  /* =========================
+     ARCHIVED ALI VAI PAYMENTS
+  ========================= */
 
-const mamaSnap =
-await db.collection("monthlyArchives")
-.doc(monthKey)
-.collection("mamaPayments")
-.get();
+  const mamaSnap =
+    await db.collection("monthlyArchives")
+      .doc(monthKey)
+      .collection("mamaPayments")
+      .get();
 
-const mamaPayments = [];
+  const mamaPayments = [];
 
-let totalMamaPayment = 0;
+  let totalMamaPayment = 0;
 
-mamaSnap.forEach((doc)=>{
-const item = doc.data();
+  mamaSnap.forEach((doc)=>{
+    const item = doc.data();
 
-const amount =  
-  Number(item.amount || 0);  
+    const amount =
+      Number(item.amount || 0);
 
-totalMamaPayment += amount;  
+    totalMamaPayment += amount;
 
-mamaPayments.push({  
-  date: item.date || "N/A",  
-  amount: amount  
-});
+    mamaPayments.push({
+      date: item.date || "N/A",
+      amount: amount
+    });
+  });
 
-});
+  /* তারিখ অনুযায়ী সাজানো */
+  mamaPayments.sort((a,b)=>{
+    return String(a.date).localeCompare(
+      String(b.date)
+    );
+  });
 
-/* তারিখ অনুযায়ী সাজানো */
-mamaPayments.sort((a,b)=>{
-return String(a.date).localeCompare(
-String(b.date)
-);
-});
 
-/* =========================
-USERS
-========================= */
+  /* =========================
+     USERS
+  ========================= */
 
-const userList =
-Array.from(users).sort();
+  const userList =
+    Array.from(users).sort();
 
-/* =========================
-MONTH DAYS
-========================= */
 
-const year =
-parseInt(monthKey.split("-")[0]);
+  /* =========================
+     MONTH DAYS
+  ========================= */
 
-const month =
-parseInt(monthKey.split("-")[1]);
+  const year =
+    parseInt(monthKey.split("-")[0]);
 
-const daysInMonth =
-new Date(year, month, 0).getDate();
+  const month =
+    parseInt(monthKey.split("-")[1]);
 
-/* =========================
-TABLE START
-========================= */
+  const daysInMonth =
+    new Date(year, month, 0).getDate();
 
-let html = `
 
-  <div style="overflow:auto;width:100%;height:90vh">    <h2 style="text-align:center;margin:10px;">  
-    📊 ${monthKey} Meal Sheet  
-  </h2>    <table border="1"  
-    style="  
-      border-collapse:collapse;  
-      width:max-content;  
-      min-width:100%;  
-      text-align:center;  
-    ">    <thead>    <tr>  
-    <th rowspan="2">তারিখ</th>  
-  `;  userList.forEach((user)=>{
-html +=   <th colspan="3">${user}</th>  ;
-});
+  /* =========================
+     TABLE START
+  ========================= */
 
-html += `
-<th colspan="3">মোট</th>
+  let html = `
 
-  </tr>    <tr>  
-  `;  userList.forEach(()=>{
-html +=   <th>🌅</th>   <th>☀️</th>   <th>🌙</th>  ;
-});
+  <div style="overflow:auto;width:100%;height:90vh">
 
-html += `
-<th>🌅</th>
-<th>☀️</th>
-<th>🌙</th>
+  <h2 style="text-align:center;margin:10px;">
+    📊 ${monthKey} Meal Sheet
+  </h2>
 
-  </tr>    </thead>    <tbody>  
-  `;  /* =========================
-DAILY MEALS
-========================= */
+  <table border="1"
+    style="
+      border-collapse:collapse;
+      width:max-content;
+      min-width:100%;
+      text-align:center;
+    ">
 
-for(let d=1; d<=daysInMonth; d++){
+  <thead>
 
-const day =  
-  String(d).padStart(2,"0");  
+  <tr>
+    <th rowspan="2">তারিখ</th>
+  `;
 
-html += `  
-  <tr>  
-    <td><b>${day}</b></td>  
-`;  
 
-let dayB = 0;  
-let dayL = 0;  
-let dayD = 0;  
+  userList.forEach((user)=>{
+    html += `
+      <th colspan="3">${user}</th>
+    `;
+  });
 
 
-userList.forEach((user)=>{  
+  html += `
+    <th colspan="3">মোট</th>
+  </tr>
 
-  const meal =  
-    meals[d]?.[user];  
+  <tr>
+  `;
 
-  if(meal){  
 
-    dayB += meal.b;  
-    dayL += meal.l;  
-    dayD += meal.d;  
+  userList.forEach(()=>{
+    html += `
+      <th>🌅</th>
+      <th>☀️</th>
+      <th>🌙</th>
+    `;
+  });
 
-  }  
 
+  html += `
+    <th>🌅</th>
+    <th>☀️</th>
+    <th>🌙</th>
+  </tr>
 
-  html += `  
-    <td>${meal ? meal.b : ""}</td>  
-    <td>${meal ? meal.l : ""}</td>  
-    <td>${meal ? meal.d : ""}</td>  
-  `;  
+  </thead>
 
-});  
+  <tbody>
+  `;
 
 
-html += `  
-    <td><b>${dayB}</b></td>  
-    <td><b>${dayL}</b></td>  
-    <td><b>${dayD}</b></td>  
-  </tr>  
-`;
+  /* =========================
+     DAILY MEALS
+  ========================= */
 
-}
+  for(let d=1; d<=daysInMonth; d++){
 
-/* =========================
-TOTAL MEALS
-========================= */
+    const day =
+      String(d).padStart(2,"0");
 
-html += `
-<tr style="  
-background:#374151;  
-color:white;  
-font-weight:bold;  
-">
+    html += `
+      <tr>
+        <td><b>${day}</b></td>
+    `;
 
-<td>T</td>
+    let dayB = 0;
+    let dayL = 0;
+    let dayD = 0;
 
-`;
 
-let grandB = 0;
-let grandL = 0;
-let grandD = 0;
+    userList.forEach((user)=>{
 
-userList.forEach((user)=>{
+      const meal =
+        meals[d]?.[user];
 
-let totalB = 0;  
-let totalL = 0;  
-let totalD = 0;  
+      if(meal){
 
+        dayB += meal.b;
+        dayL += meal.l;
+        dayD += meal.d;
 
-for(let d=1; d<=daysInMonth; d++){  
+      }
 
-  const meal =  
-    meals[d]?.[user];  
 
-  if(meal){  
+      html += `
+        <td>${meal ? meal.b : ""}</td>
+        <td>${meal ? meal.l : ""}</td>
+        <td>${meal ? meal.d : ""}</td>
+      `;
 
-    totalB += meal.b;  
-    totalL += meal.l;  
-    totalD += meal.d;  
+    });
 
-  }  
-}  
 
+    html += `
+        <td><b>${dayB}</b></td>
+        <td><b>${dayL}</b></td>
+        <td><b>${dayD}</b></td>
+      </tr>
+    `;
+  }
 
-grandB += totalB;  
-grandL += totalL;  
-grandD += totalD;  
 
+  /* =========================
+     TOTAL MEALS
+  ========================= */
 
-html += `  
-  <td>${totalB}</td>  
-  <td>${totalL}</td>  
-  <td>${totalD}</td>  
-`;
+  html += `
+    <tr style="
+      background:#374151;
+      color:white;
+      font-weight:bold;
+    ">
 
-});
+      <td>T</td>
+  `;
 
-html += `
-<td><b>${grandB}</b></td>
-<td><b>${grandL}</b></td>
-<td><b>${grandD}</b></td>
 
-</tr>
+  let grandB = 0;
+  let grandL = 0;
+  let grandD = 0;
 
-`;
 
-/* =========================
-MEAL COST
-========================= */
+  userList.forEach((user)=>{
 
-html += `
-<tr style="  
-background:#374151;  
-color:#00ff88;  
-font-weight:bold;  
-">
+    let totalB = 0;
+    let totalL = 0;
+    let totalD = 0;
 
-<td>৳</td>
 
-`;
+    for(let d=1; d<=daysInMonth; d++){
 
-let grandCost = 0;
+      const meal =
+        meals[d]?.[user];
 
-userList.forEach((user)=>{
+      if(meal){
 
-let totalCost = 0;  
+        totalB += meal.b;
+        totalL += meal.l;
+        totalD += meal.d;
 
+      }
+    }
 
-for(let d=1; d<=daysInMonth; d++){  
 
-  const meal =  
-    meals[d]?.[user];  
+    grandB += totalB;
+    grandL += totalL;
+    grandD += totalD;
 
-  if(meal){  
 
-    totalCost +=  
-      (meal.b * 20) +  
-      (meal.l * 50) +  
-      (meal.d * 50);  
+    html += `
+      <td>${totalB}</td>
+      <td>${totalL}</td>
+      <td>${totalD}</td>
+    `;
 
-  }  
-}  
+  });
 
 
-grandCost += totalCost;  
+  html += `
+      <td><b>${grandB}</b></td>
+      <td><b>${grandL}</b></td>
+      <td><b>${grandD}</b></td>
 
+    </tr>
+  `;
 
-html += `  
-  <td colspan="3">  
-    ৳ ${totalCost}  
-  </td>  
-`;
 
-});
+  /* =========================
+     MEAL COST
+  ========================= */
 
-html += `
-<td colspan="3">
-<b>৳ ${grandCost}</b>
-</td>
+  html += `
+    <tr style="
+      background:#374151;
+      color:#00ff88;
+      font-weight:bold;
+    ">
 
-</tr>
+      <td>৳</td>
+  `;
 
-`;
 
-/* =========================
-DEPOSIT
-========================= */
+  let grandCost = 0;
 
-html += `
-<tr style="  
-background:#1f2937;  
-color:#00e676;  
-font-weight:bold;  
-">
 
-<td>জমা</td>
+  userList.forEach((user)=>{
 
-`;
+    let totalCost = 0;
 
-let grandDeposit = 0;
 
-userList.forEach((user)=>{
+    for(let d=1; d<=daysInMonth; d++){
 
-const deposit =  
-  deposits[user] || 0;  
+      const meal =
+        meals[d]?.[user];
 
-grandDeposit += deposit;  
+      if(meal){
 
+        totalCost +=
+          (meal.b * 20) +
+          (meal.l * 50) +
+          (meal.d * 50);
 
-html += `  
-  <td colspan="3">  
-    ৳ ${deposit}  
-  </td>  
-`;
+      }
+    }
 
-});
 
-html += `
-<td colspan="3">
-৳ ${grandDeposit}
-</td>
+    grandCost += totalCost;
 
-</tr>
 
-`;
+    html += `
+      <td colspan="3">
+        ৳ ${totalCost}
+      </td>
+    `;
 
-/* =========================
-BALANCE
-========================= */
+  });
 
-html += `
-<tr style="  
-background:#0f172a;  
-color:#38bdf8;  
-font-weight:bold;  
-">
 
-<td>ব্যালেন্স</td>
+  html += `
+      <td colspan="3">
+        <b>৳ ${grandCost}</b>
+      </td>
 
-`;
+    </tr>
+  `;
 
-userList.forEach((user)=>{
 
-let totalCost = 0;  
+  /* =========================
+     DEPOSIT
+  ========================= */
 
+  html += `
+    <tr style="
+      background:#1f2937;
+      color:#00e676;
+      font-weight:bold;
+    ">
 
-for(let d=1; d<=daysInMonth; d++){  
+      <td>জমা</td>
+  `;
 
-  const meal =  
-    meals[d]?.[user];  
 
-  if(meal){  
+  let grandDeposit = 0;
 
-    totalCost +=  
-      (meal.b * 20) +  
-      (meal.l * 50) +  
-      (meal.d * 50);  
 
-  }  
-}  
+  userList.forEach((user)=>{
 
+    const deposit =
+      deposits[user] || 0;
 
-const deposit =  
-  deposits[user] || 0;  
+    grandDeposit += deposit;
 
-const balance =  
-  deposit - totalCost;  
 
+    html += `
+      <td colspan="3">
+        ৳ ${deposit}
+      </td>
+    `;
 
-html += `  
-  <td colspan="3">  
-    ৳ ${balance}  
-  </td>  
-`;
+  });
 
-});
 
-html += `
-<td colspan="3">-</td>
+  html += `
+      <td colspan="3">
+        ৳ ${grandDeposit}
+      </td>
 
-</tr>
+    </tr>
+  `;
 
-  </tbody>    </table>    <!-- =========================  
-       ALI VAI PAYMENT HISTORY  
-  ========================= -->    <div style="  
-    margin:20px 5px;  
-    padding:15px;  
-    background:#f8fafc;  
-    border-radius:12px;  
-    border:1px solid #ddd;  
-  ">  <h3 style="  
-  margin-top:0;  
-  text-align:center;  
-">  
-  🤝 আলী ভাইকে দেওয়া টাকা  
-</h3>
 
-`;
+  /* =========================
+     BALANCE
+  ========================= */
 
-if(mamaPayments.length === 0){
+  html += `
+    <tr style="
+      background:#0f172a;
+      color:#38bdf8;
+      font-weight:bold;
+    ">
 
-html += `  
-  <div style="  
-    text-align:center;  
-    padding:10px;  
-    color:#777;  
-  ">  
-    এই মাসে কোনো টাকা দেওয়া হয়নি।  
-  </div>  
-`;
+      <td>ব্যালেন্স</td>
+  `;
 
-}else{
 
-mamaPayments.forEach((item)=>{  
+  userList.forEach((user)=>{
 
-  html += `  
-    <div style="  
-      display:flex;  
-      justify-content:space-between;  
-      align-items:center;  
-      padding:10px;  
-      margin-bottom:6px;  
-      background:white;  
-      border-radius:8px;  
-      border:1px solid #e5e7eb;  
-    ">  
+    let totalCost = 0;
 
-      <span>  
-        📅 ${item.date}  
-      </span>  
 
-      <strong>  
-        ৳ ${item.amount}  
-      </strong>  
+    for(let d=1; d<=daysInMonth; d++){
 
-    </div>  
-  `;  
+      const meal =
+        meals[d]?.[user];
 
-});  
+      if(meal){
 
+        totalCost +=
+          (meal.b * 20) +
+          (meal.l * 50) +
+          (meal.d * 50);
 
-html += `  
-  <div style="  
-    display:flex;  
-    justify-content:space-between;  
-    margin-top:10px;  
-    padding:12px;  
-    background:#1f2937;  
-    color:#00e676;  
-    border-radius:8px;  
-    font-weight:bold;  
-  ">  
+      }
+    }
 
-    <span>🤝 মোট আলী ভাইকে দেওয়া</span>  
 
-    <span>  
-      ৳ ${totalMamaPayment}  
-    </span>  
+    const deposit =
+      deposits[user] || 0;
 
-  </div>  
-`;
+    const balance =
+      deposit - totalCost;
 
-}
 
-html += `
+    html += `
+      <td colspan="3">
+        ৳ ${balance}
+      </td>
+    `;
 
-  </div>    </div>  `;
+  });
 
-content.innerHTML = html;
-}
+
+  html += `
+      <td colspan="3">-</td>
+
+    </tr>
+
+  </tbody>
+
+  </table>
+
+
+  <!-- =========================
+       ALI VAI PAYMENT HISTORY
+  ========================= -->
+
+  <div style="
+    margin:20px 5px;
+    padding:15px;
+    background:#f8fafc;
+    border-radius:12px;
+    border:1px solid #ddd;
+  ">
+
+    <h3 style="
+      margin-top:0;
+      text-align:center;
+    ">
+      🤝 আলী ভাইকে দেওয়া টাকা
+    </h3>
+  `;
+
+
+  if(mamaPayments.length === 0){
+
+    html += `
+      <div style="
+        text-align:center;
+        padding:10px;
+        color:#777;
+      ">
+        এই মাসে কোনো টাকা দেওয়া হয়নি।
+      </div>
+    `;
+
+  }else{
+
+    mamaPayments.forEach((item)=>{
+
+      html += `
+        <div style="
+          display:flex;
+          justify-content:space-between;
+          align-items:center;
+          padding:10px;
+          margin-bottom:6px;
+          background:white;
+          border-radius:8px;
+          border:1px solid #e5e7eb;
+        ">
+
+          <span>
+            📅 ${item.date}
+          </span>
+
+          <strong>
+            ৳ ${item.amount}
+          </strong>
+
+        </div>
+      `;
+
+    });
+
+
+    html += `
+      <div style="
+        display:flex;
+        justify-content:space-between;
+        margin-top:10px;
+        padding:12px;
+        background:#1f2937;
+        color:#00e676;
+        border-radius:8px;
+        font-weight:bold;
+      ">
+
+        <span>🤝 মোট আলী ভাইকে দেওয়া</span>
+
+        <span>
+          ৳ ${totalMamaPayment}
+        </span>
+
+      </div>
+    `;
+
+  }
+
+
+  html += `
+
+  </div>
+
+  </div>
+
+  `;
+
+
+  content.innerHTML = html;
+                   }
 async function copyTomorrowMeal(){
 
-if(currentUser !== "Admin"){
-alert("শুধু Admin কপি করতে পারবে!");
-return;
-}
-
-// ==============================
-// Admin Card-এর target date বের করা
-// ==============================
-
-const now = new Date();
-
-const todayStr =
-now.getFullYear() + "-" +
-String(now.getMonth() + 1).padStart(2,"0") + "-" +
-String(now.getDate()).padStart(2,"0");
-
-let targetDate =
-localStorage.getItem("adminMealTargetDate");
-
-// প্রথমবার হলে নিয়ম অনুযায়ী target date
-if(!targetDate){
-
-const tomorrow = new Date(now);  
-
-tomorrow.setDate(  
-  tomorrow.getDate() + 1  
-);  
-
-targetDate =  
-  tomorrow.getFullYear() + "-" +  
-  String(tomorrow.getMonth() + 1).padStart(2,"0") + "-" +  
-  String(tomorrow.getDate()).padStart(2,"0");  
-
-localStorage.setItem(  
-  "adminMealTargetDate",  
-  targetDate  
-);
-
-}
-
-// ==============================
-// দুপুর ১টার পর target update
-// ==============================
-
-const todayOnePM =
-new Date(
-now.getFullYear(),
-now.getMonth(),
-now.getDate(),
-13,
-0,
-0
-);
-
-if(now >= todayOnePM){
-
-const target =  
-  new Date(targetDate + "T00:00:00");  
+  if(currentUser !== "Admin"){
+    alert("শুধু Admin কপি করতে পারবে!");
+    return;
+  }
 
 
-if(targetDate <= todayStr){  
+  // ==============================
+  // Admin Card-এর target date বের করা
+  // ==============================
 
-  target.setDate(  
-    target.getDate() + 1  
-  );  
+  const now = new Date();
 
-
-  targetDate =  
-    target.getFullYear() + "-" +  
-    String(target.getMonth() + 1).padStart(2,"0") + "-" +  
-    String(target.getDate()).padStart(2,"0");  
-
-
-  localStorage.setItem(  
-    "adminMealTargetDate",  
-    targetDate  
-  );  
-
-}
-
-}
-
-// ==============================
-// Target date-এর meal
-// ==============================
-
-const snap =
-await db.collection("meals")
-.where("date","==",targetDate)
-.get();
-
-let breakfast = 0;
-let lunch = 0;
-let dinner = 0;
-
-snap.forEach((doc)=>{
-
-const data = doc.data();  
+  const todayStr =
+    now.getFullYear() + "-" +
+    String(now.getMonth() + 1).padStart(2,"0") + "-" +
+    String(now.getDate()).padStart(2,"0");
 
 
-breakfast +=  
-  Number(data.breakfast || 0);  
+  let targetDate =
+    localStorage.getItem("adminMealTargetDate");
 
 
-lunch +=  
-  Number(data.lunch || 0);  
+  // প্রথমবার হলে নিয়ম অনুযায়ী target date
+  if(!targetDate){
+
+    const tomorrow = new Date(now);
+
+    tomorrow.setDate(
+      tomorrow.getDate() + 1
+    );
+
+    targetDate =
+      tomorrow.getFullYear() + "-" +
+      String(tomorrow.getMonth() + 1).padStart(2,"0") + "-" +
+      String(tomorrow.getDate()).padStart(2,"0");
+
+    localStorage.setItem(
+      "adminMealTargetDate",
+      targetDate
+    );
+
+  }
 
 
-dinner +=  
-  Number(data.dinner || 0);
+  // ==============================
+  // দুপুর ১টার পর target update
+  // ==============================
 
-});
-
-// ==============================
-// Date format
-// ==============================
-
-const parts =
-targetDate.split("-");
-
-const displayDate =
-parts[2] + "-" +
-parts[1] + "-" +
-String(parts[0]).slice(-2);
-
-const text =
-তারিখ : ${displayDate}   সকাল : ${breakfast} টা   দুপুর : ${lunch} টা   রাত : ${dinner} টা;
-
-// ==============================
-// Copy
-// ==============================
-
-try{
-
-await navigator.clipboard.writeText(text);  
+  const todayOnePM =
+    new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      13,
+      0,
+      0
+    );
 
 
-alert(  
-  "📋 Meal কপি হয়েছে!\n\n" +  
-  text  
-);
+  if(now >= todayOnePM){
 
-}catch(error){
+    const target =
+      new Date(targetDate + "T00:00:00");
 
-alert(  
-  "কপি করা যায়নি।\n\n" +  
-  text  
-);
 
-}
+    if(targetDate <= todayStr){
+
+      target.setDate(
+        target.getDate() + 1
+      );
+
+
+      targetDate =
+        target.getFullYear() + "-" +
+        String(target.getMonth() + 1).padStart(2,"0") + "-" +
+        String(target.getDate()).padStart(2,"0");
+
+
+      localStorage.setItem(
+        "adminMealTargetDate",
+        targetDate
+      );
+
+    }
+
+  }
+
+
+  // ==============================
+  // Target date-এর meal
+  // ==============================
+
+  const snap =
+    await db.collection("meals")
+      .where("date","==",targetDate)
+      .get();
+
+
+  let breakfast = 0;
+  let lunch = 0;
+  let dinner = 0;
+
+
+  snap.forEach((doc)=>{
+
+    const data = doc.data();
+
+
+    breakfast +=
+      Number(data.breakfast || 0);
+
+
+    lunch +=
+      Number(data.lunch || 0);
+
+
+    dinner +=
+      Number(data.dinner || 0);
+
+  });
+
+
+  // ==============================
+  // Date format
+  // ==============================
+
+  const parts =
+    targetDate.split("-");
+
+
+  const displayDate =
+    parts[2] + "-" +
+    parts[1] + "-" +
+    String(parts[0]).slice(-2);
+
+
+  const text =
+`তারিখ : ${displayDate}
+সকাল : ${breakfast} টা
+দুপুর : ${lunch} টা
+রাত : ${dinner} টা`;
+
+
+  // ==============================
+  // Copy
+  // ==============================
+
+  try{
+
+    await navigator.clipboard.writeText(text);
+
+
+    alert(
+      "📋 Meal কপি হয়েছে!\n\n" +
+      text
+    );
+
+
+  }catch(error){
+
+    alert(
+      "কপি করা যায়নি।\n\n" +
+      text
+    );
+
+  }
 
 }
