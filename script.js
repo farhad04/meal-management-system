@@ -901,39 +901,29 @@ if(currentUser === "Admin"){
 
 
   
-const todayOnePM = new Date(
-  now.getFullYear(),
-  now.getMonth(),
-  now.getDate(),
-  13, 0, 0
-);
+if(now >= todayOnePM){
 
-const tomorrow = new Date(now);
-tomorrow.setDate(tomorrow.getDate() + 1);
+  const target =
+    new Date(targetDate + "T00:00:00");
 
-const tomorrowStr =
-  tomorrow.getFullYear() + "-" +
-  String(tomorrow.getMonth() + 1).padStart(2, "0") + "-" +
-  String(tomorrow.getDate()).padStart(2, "0");
+  if(targetDate <= todayStr){
 
-// দুপুর ১টার আগে পুরোনো তারিখ থাকলে আজকের তারিখ দেখাবে
-if (now < todayOnePM && targetDate < todayStr) {
-  targetDate = todayStr;
+    target.setDate(
+      target.getDate() + 1
+    );
 
-  localStorage.setItem(
-    "adminMealTargetDate",
-    targetDate
-  );
-}
+    targetDate =
+      target.getFullYear() + "-" +
+      String(target.getMonth() + 1).padStart(2,"0") + "-" +
+      String(target.getDate()).padStart(2,"0");
 
-// দুপুর ১টার পর আজ বা তার আগের তারিখ থাকলে আগামীকাল দেখাবে
-if (now >= todayOnePM && targetDate <= todayStr) {
-  targetDate = tomorrowStr;
+    localStorage.setItem(
+      "adminMealTargetDate",
+      targetDate
+    );
 
-  localStorage.setItem(
-    "adminMealTargetDate",
-    targetDate
-  );
+  }
+
 }
 
   
