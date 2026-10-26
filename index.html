@@ -296,6 +296,80 @@
 <h3>📢 নোটিশ লিখুন</h3>
 <textarea id="noticeInput" placeholder="নোটিশ লিখুন"></textarea>
 <button class="saveNoticeBtn" onclick="saveNotice()">নোটিশ সেভ</button>
+
+<button
+  type="button"
+  class="saveNoticeBtn"
+  onclick="toggleAdminMealEditor()"
+>
+  🍽️ Admin Meal Management
+</button>
+
+<div id="adminMealEditor" style="display:none; margin-top:15px; padding:15px; border-radius:12px; background:rgba(255,255,255,0.08);">
+
+  <h3>🍽️ Admin-এর মিল এন্ট্রি ও পরিবর্তন</h3>
+
+  <label>তারিখ নির্বাচন</label>
+  <input type="date" id="adminEditMealDate">
+
+  <label>সদস্য নির্বাচন</label>
+  <select id="adminEditMealMember">
+    <option value="">সদস্য নির্বাচন করুন</option>
+  </select>
+
+  <div class="meal-grid">
+
+    <div>
+      <label>🌅 সকাল (20৳)</label>
+      <select id="adminEditBreakfast">
+        <option value="0">0</option>
+        <option value="0.5">0.5</option>
+        <option value="1">1</option>
+        <option value="1.5">1.5</option>
+        <option value="2">2</option>
+        <option value="2.5">2.5</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+      </select>
+    </div>
+
+    <div>
+      <label>☀️ দুপুর (50৳)</label>
+      <select id="adminEditLunch">
+        <option value="0">0</option>
+        <option value="0.5">0.5</option>
+        <option value="1">1</option>
+        <option value="1.5">1.5</option>
+        <option value="2">2</option>
+        <option value="2.5">2.5</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+      </select>
+    </div>
+
+    <div>
+      <label>🌙 রাত (50৳)</label>
+      <select id="adminEditDinner">
+        <option value="0">0</option>
+        <option value="0.5">0.5</option>
+        <option value="1">1</option>
+        <option value="1.5">1.5</option>
+        <option value="2">2</option>
+        <option value="2.5">2.5</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+      </select>
+    </div>
+
+  </div>
+
+  <button type="button" onclick="saveAdminMeal()">
+    💾 মিল সংরক্ষণ / পরিবর্তন
+  </button>
+
+  <p id="adminMealEditorStatus"></p>
+
+</div>
    
 
 <button
