@@ -3182,3 +3182,173 @@ async function copyTomorrowMeal(){
   }
 
 }
+/* =====================================
+   ADMIN MEAL MANAGEMENT
+   Admin-only, no date time restriction
+===================================== */
+
+function getLocalMealDate() {
+  const now = new Date();
+
+  return (
+    now.getFullYear() + "-" +
+    String(now.getMonth() + 1).padStart(2, "0") + "-" +
+    String(now.getDate()).padStart(2, "0")
+  );
+}
+
+async function toggleAdminMealEditor() {
+  if (currentUser !== "Admin") {
+    alert("শুধু Admin এই সুবিধা ব্যবহার করতে পারবেন!");
+    return;
+  }
+
+  const box = document.getElementById("adminMealEditor");
+
+  if (box.style.display !== "none") {
+    box.style.display = "none";
+    return;
+  }
+
+  box.style.display = "block";
+
+  const dateInput = document.getElementById("adminEditMealDate");
+  const memberSelect = document.getElementById("adminEditMealMember");
+
+  if (!dateInput.value) {
+    dateInput.value = getLocalMealDate();
+  }
+
+  try {
+    const snap = await db.collection("members").get();
+
+    memberSelect.innerHTML =
+      '<option value="">সদস্য নির্বাচন করুন</option>';
+
+    snap.forEach((doc) => {
+      const member = doc.data();
+      const option = document.createElement("option");
+
+      option.value = member.name;
+      option.textContent = member.name;
+
+      memberSelect.appendChild(option);
+    });
+
+    document.getElementById("adminMealEditorStatus").textContent =
+      "সদস্য ও তারিখ নির্বাচন করুন।";
+
+  } catch (error) {
+    console.error("Member loading error:", error);
+    alert("সদস্যদের তালিকা লোড করা যায়নি।");
+  }
+}
+
+// নির্বাচিত সদস্য বা তারিখ পরিবর্তন হলে আগের মিল দেখাবে
+document.getElementById("adminEditMealMember")
+  .addEventListener("change", loadAdminMealForEdit);
+
+document.getElementById("adminEditMealDate")
+  .addEventListener("change", loadAdminMealForEdit);
+
+async function loadAdminMealForEdit() {
+  if (currentUser !== "Admin") return;
+
+  const member = document.getElementById("adminEditMealMember").value;
+  const date = document.getElementById("adminEditMealDate").value;
+
+  if (!member || !date) return;
+
+  try {
+    const id = member + "_" + date;
+    const doc = await db.collection("meals").doc(id).get();
+
+    const breakfast = document.getElementById("adminEditBreakfast");
+    const lunch = document.getElementById("adminEditLunch");
+    const dinner = document.getElementById("adminEditDinner");
+    const status = document.getElementById("adminMealEditorStatus");
+
+    if (doc.exists) {
+      const meal = doc.data();
+
+      breakfast.value = String(meal.breakfast ?? 0);
+      lunch.value = String(meal.lunch ?? 0);
+      dinner.value = String(meal.dinner ?? 0);
+
+      status.textContent = "আগের মিল পাওয়া গেছে। পরিবর্তন করে সেভ করতে পারবেন।";
+    } else {
+      breakfast.value = "0";
+      lunch.value = "0";
+      dinner.value = "0";
+
+      status.textContent = "এই তারিখে মিল নেই। নতুন মিল দিতে পারবেন।";
+    }
+  } catch (error) {
+    console.error("Meal loading error:", error);
+    alert("মিলের তথ্য লোড করা যায়নি।");
+  }
+}
+
+async function saveAdminMeal() {
+  if (currentUser !== "Admin") {
+    alert("শুধু Admin মিল পরিবর্তন করতে পারবেন!");
+    return;
+  }
+
+  const member = document.getElementById("adminEditMealMember").value;
+  const date = document.getElementById("adminEditMealDate").value;
+
+  if (!member || !date) {
+    alert("সদস্য ও তারিখ নির্বাচন করুন।");
+    return;
+  }
+
+  const breakfast = Number(document.getElementById("adminEditBreakfast").value);
+  const lunch = Number(document.getElementById("adminEditLunch").value);
+  const dinner = Number(document.getElementById("adminEditDinner").value);
+
+  if (
+    ![breakfast, lunch, dinner].every(
+      value => Number.isFinite(value) && value >= 0
+    )
+  ) {
+    alert("মিলের সংখ্যা সঠিকভাবে দিন।");
+    return;
+  }
+
+  const totalMeal = breakfast + lunch + dinner;
+  const totalCost =
+    breakfast * BREAKFAST_RATE +
+    lunch * LUNCH_RATE +
+    dinner * DINNER_RATE;
+
+  const mealRef = db.collection("meals").doc(member + "_" + date);
+
+  try {
+    const oldDoc = await mealRef.get();
+    const oldData = oldDoc.exists ? oldDoc.data() : {};
+
+    await mealRef.set({
+      user: member,
+      date: date,
+      breakfast: breakfast,
+      lunch: lunch,
+      dinner: dinner,
+      totalMeal: totalMeal,
+      totalCost: totalCost,
+      createdAt: oldData.createdAt || Date.now(),
+      updatedAt: Date.now()
+    });
+
+    document.getElementById("adminMealEditorStatus").textContent =
+      "মিল সফলভাবে সংরক্ষণ হয়েছে!";
+
+    alert("✅ " + member + "-এর " + date + " তারিখের মিল সেভ হয়েছে।");
+
+    loadFinancialSummary();
+
+  } catch (error) {
+    console.error("Admin meal save error:", error);
+    alert("মিল সেভ হয়নি। Firebase সংযোগ ও Firestore Rules পরীক্ষা করুন।");
+  }
+}
