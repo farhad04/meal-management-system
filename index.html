@@ -197,13 +197,31 @@
 
             <button onclick="savePayment()">টাকা জমা দিন</button>
 
-            <div class="balance-box">
+            <div class="balance-box" id="paymentBalanceBox">
                 <h4>Total Deposit: ৳ <span id="totalDeposit">0</span></h4>
                 <h4>Meal 💰 খরচ: ৳ <span id="usedCost">0</span></h4>
                 <h4>Current Balance: ৳ <span id="currentBalance">0</span></h4>
             </div>
 
         </div>
+        
+    <div class="payment-card" id="mamaPaymentBox">
+
+        <h3>AliVai Payment</h3>
+
+        <input type="date" id="AliVaiDate">
+
+        <input type="number" id="AliVaiAmount" placeholder="Enter Amount">
+
+        <button onclick="saveMamaPayment()">Save AliVai Payment</button>
+
+        <div class="balance-box">
+            <h4>Total AliVai Payment: ৳ <span id="totalAliVaiPayment">0</span></h4>
+            <h4>🍽️ মোট মিল 💰 খরচ: ৳ <span id="AliVaiMealCost">0</span></h4>
+            <h4>Remaining: ৳ <span id="remainingAliVaiBalance">0</span></h4>
+        </div>
+
+    </div>
 
 
     <div class="table-card">
@@ -252,24 +270,7 @@
 
     <div class="member-cost-list hidden" id="memberCostList"></div>
 
-    
-    <div class="payment-card" id="mamaPaymentBox">
 
-        <h3>AliVai Payment</h3>
-
-        <input type="date" id="AliVaiDate">
-
-        <input type="number" id="AliVaiAmount" placeholder="Enter Amount">
-
-        <button onclick="saveMamaPayment()">Save AliVai Payment</button>
-
-        <div class="balance-box">
-            <h4>Total AliVai Payment: ৳ <span id="totalAliVaiPayment">0</span></h4>
-            <h4>🍽️ মোট মিল 💰 খরচ: ৳ <span id="AliVaiMealCost">0</span></h4>
-            <h4>Remaining: ৳ <span id="remainingAliVaiBalance">0</span></h4>
-        </div>
-
-    </div>
 
 
     
