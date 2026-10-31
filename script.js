@@ -376,6 +376,7 @@ loadNotice();
 document.getElementById("welcome").innerText = "Welcome " + currentUser;
 
 if(currentUser === "Admin"){
+  document.getElementById("paymentBalanceBox").style.display = "none";
 
     const copyBtn =
       document.getElementById("copyTomorrowMealBtn");
@@ -510,7 +511,13 @@ async function login(){
     "loggedUser",
     currentUser
   );
+const paymentBalanceBox =
+  document.getElementById("paymentBalanceBox");
 
+if(paymentBalanceBox){
+  paymentBalanceBox.style.display =
+    currentUser === "Admin" ? "none" : "block";
+}
 
   // Payment dropdown
   const paymentSelect =
