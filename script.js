@@ -1089,31 +1089,50 @@ alert("Payment Saved!");
 
 async function loadPayments(){
 
-const snapshot = await db.collection("payments").get();
+  const snapshot = await db.collection("payments").get();
 
-let totalDeposit = 0;
+  let totalDeposit = 0;
 
-snapshot.forEach((doc)=>{
+  snapshot.forEach((doc)=>{
 
-const item = doc.data();
+    const item = doc.data();
 
-if(currentUser !== "Admin" && item.user !== currentUser){
-return;
-}
+    if(currentUser !== "Admin" && item.user !== currentUser){
+      return;
+    }
 
-if(item.status === "accepted"){
-totalDeposit += item.amount;
-}
+    if(item.status === "accepted"){
+      totalDeposit += Number(item.amount || 0);
+    }
 
-});
+  });
 
-const usedCost = parseInt(document.getElementById("totalCost").innerText) || 0;
+  // আগের মাসের ব্যালেন্স
+  let openingBalance = 0;
 
-document.getElementById("totalDeposit").innerText = totalDeposit;
+  if(currentUser !== "Admin"){
 
-document.getElementById("usedCost").innerText = usedCost;
+    const memberDoc = await db.collection("members")
+      .doc(currentUser)
+      .get();
 
-document.getElementById("currentBalance").innerText = totalDeposit - usedCost;
+    if(memberDoc.exists){
+      openingBalance = Number(
+        memberDoc.data().openingBalance || 0
+      );
+    }
+
+  }
+
+  const usedCost =
+    Number(document.getElementById("totalCost").innerText) || 0;
+
+  const currentBalance =
+    openingBalance + totalDeposit - usedCost;
+
+  document.getElementById("totalDeposit").innerText = totalDeposit;
+  document.getElementById("usedCost").innerText = usedCost;
+  document.getElementById("currentBalance").innerText = currentBalance;
 
 }
 
